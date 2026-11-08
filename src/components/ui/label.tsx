@@ -1,0 +1,21 @@
+import { forwardRef, type LabelHTMLAttributes } from 'react'
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+const Label = forwardRef<HTMLLabelElement, LabelHTMLAttributes<HTMLLabelElement>>(
+  ({ className, ...props }, ref) => (
+    <label
+      ref={ref}
+      className={cn('text-sm font-medium leading-none text-zinc-300', className)}
+      {...props}
+    />
+  ),
+)
+Label.displayName = 'Label'
+
+export { Label }
+export default Label
