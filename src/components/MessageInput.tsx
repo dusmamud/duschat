@@ -21,6 +21,13 @@ interface MessageInputProps {
 
 const MAX_MESSAGE_LENGTH = 20000
 
+// Native textarea autosize: Chrome 123+ / Safari 18.4+ grow the box
+// themselves (field-sizing: content in the class list) — zero JS
+// measurement, zero forced layout. Older browsers use the rAF fallback
+// in resize() below.
+const NATIVE_AUTOSIZE =
+  typeof CSS !== 'undefined' && CSS.supports('field-sizing', 'content')
+
 export default function MessageInput({
   onSendText,
   onSendCode,
@@ -40,6 +47,7 @@ export default function MessageInput({
   const imageInputRef = useRef<HTMLInputElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const pasteErrorTimerRef = useRef<number | null>(null)
+  const resizeRafRef = useRef<number | null>(null)
 
   // Revoke the staged image preview URL when it is replaced or on unmount.
   useEffect(() => {
@@ -48,11 +56,24 @@ export default function MessageInput({
     }
   }, [stagedPreview])
 
+  // Grow/shrink the composer to its content. Reading scrollHeight forces
+  // a full-page reflow, and onChange fires per keystroke — so measure at
+  // most once per animation frame, and only write when the height
+  // actually changes. (Modern browsers skip this entirely: see
+  // NATIVE_AUTOSIZE above.)
   const resize = () => {
-    const el = textareaRef.current
-    if (!el) return
-    el.style.height = 'auto'
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`
+    if (NATIVE_AUTOSIZE) return
+    if (!textareaRef.current || resizeRafRef.current !== null) return
+    resizeRafRef.current = requestAnimationFrame(() => {
+      resizeRafRef.current = null
+      const el = textareaRef.current
+      if (!el) return
+      const next = Math.min(el.scrollHeight, 160)
+      if (Math.abs(el.clientHeight - next) > 1) {
+        el.style.height = 'auto'
+        el.style.height = `${next}px`
+      }
+    })
   }
 
   const showPasteError = (msg: string) => {
@@ -290,7 +311,7 @@ export default function MessageInput({
             onPaste={handlePaste}
             placeholder={codeMode ? 'Paste code' : stagedFile ? 'Add a caption' : 'Message'}
             aria-label="Message"
-            className="max-h-[160px] min-h-[44px] flex-1 resize-none rounded-[10px] border border-line bg-raised px-4 py-2.5 text-[15px] text-ink transition-colors placeholder:text-ink-3 focus:border-amber/50 focus:outline-none"
+            className="field-sizing-content max-h-[160px] min-h-[44px] flex-1 resize-none rounded-[10px] border border-line bg-raised px-4 py-2.5 text-[15px] text-ink transition-colors placeholder:text-ink-3 focus:border-amber/50 focus:outline-none"
           />
 
           <button

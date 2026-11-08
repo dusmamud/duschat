@@ -1,5 +1,9 @@
 import { useState } from 'react'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+// Light Prism build: the full build ships every language (~650 kB parsed
+// on the main thread the first time a code message mounts) but this app
+// always renders language="text", so no language is ever highlighted.
+// PrismLight has the core only — same output, a fraction of the cost.
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { Check, Copy } from 'lucide-react'
 import { copyTextToClipboard } from '@/lib/clipboard'
