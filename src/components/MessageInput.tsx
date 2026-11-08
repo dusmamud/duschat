@@ -1,12 +1,12 @@
 import { useRef, useState, type KeyboardEvent, type RefObject } from 'react'
-import { Code2, FileText, ImagePlus, Send, X } from 'lucide-react'
+import { Code2, ImagePlus, Paperclip, Send, X } from 'lucide-react'
 import type { ReplyTarget } from '@/lib/types'
 
 interface MessageInputProps {
   onSendText: (text: string) => void
   onSendCode: (code: string) => void
   onPickImage: (file: File) => void
-  onPickTxt: (file: File) => void
+  onPickFile: (file: File) => void
   replyTarget: ReplyTarget | null
   onCancelReply: () => void
   disabled?: boolean
@@ -16,7 +16,7 @@ export default function MessageInput({
   onSendText,
   onSendCode,
   onPickImage,
-  onPickTxt,
+  onPickFile,
   replyTarget,
   onCancelReply,
   disabled,
@@ -25,7 +25,7 @@ export default function MessageInput({
   const [codeMode, setCodeMode] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const imageInputRef = useRef<HTMLInputElement | null>(null)
-  const txtInputRef = useRef<HTMLInputElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const resize = () => {
     const el = textareaRef.current
@@ -82,11 +82,10 @@ export default function MessageInput({
             onChange={(e) => handleFile(e.target.files?.[0], onPickImage, imageInputRef)}
           />
           <input
-            ref={txtInputRef}
+            ref={fileInputRef}
             type="file"
-            accept=".txt"
             className="hidden"
-            onChange={(e) => handleFile(e.target.files?.[0], onPickTxt, txtInputRef)}
+            onChange={(e) => handleFile(e.target.files?.[0], onPickFile, fileInputRef)}
           />
           <button
             type="button"
@@ -99,12 +98,12 @@ export default function MessageInput({
           </button>
           <button
             type="button"
-            onClick={() => txtInputRef.current?.click()}
+            onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
-            aria-label="Send .txt file"
+            aria-label="Attach any file"
             className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-40"
           >
-            <FileText className="h-5 w-5" />
+            <Paperclip className="h-5 w-5" />
           </button>
           <button
             type="button"

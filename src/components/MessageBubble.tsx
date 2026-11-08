@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Check, Copy, FileText, Reply } from 'lucide-react'
+import { Check, Copy, Download, File, FileText, Reply } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
-import { formatFileSize } from '@/lib/files'
+import { formatFileSize, isTxtFile } from '@/lib/files'
 import CodeBlock from '@/components/CodeBlock'
 import type { Message } from '@/lib/types'
 
@@ -21,13 +21,15 @@ function copyText(message: Message): string {
 
 export default function MessageBubble({ message, isMine, onReply, onOpenTxt }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false)
-  const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [fileUrl, setFileUrl] = useState<string | null>(null)
 
   // Private bucket: file_url is a storage path, so resolve a signed URL.
+  // Images show inline; .txt files open in the popup viewer; every other
+  // file is a download attachment.
   useEffect(() => {
-    if (message.type !== 'image' || !message.file_url) return
+    if ((message.type !== 'image' && message.type !== 'file') || !message.file_url) return
     if (message.file_url.startsWith('http')) {
-      setImageUrl(message.file_url)
+      setFileUrl(message.file_url)
       return
     }
     let cancelled = false
@@ -35,12 +37,15 @@ export default function MessageBubble({ message, isMine, onReply, onOpenTxt }: M
       const { data, error } = await supabase.storage
         .from('chat-files')
         .createSignedUrl(message.file_url as string, 3600)
-      if (!cancelled && !error && data) setImageUrl(data.signedUrl)
+      if (!cancelled && !error && data) setFileUrl(data.signedUrl)
     })()
     return () => {
       cancelled = true
     }
   }, [message.type, message.file_url])
+
+  const imageUrl = message.type === 'image' ? fileUrl : null
+  const isTxt = message.type === 'file' && isTxtFile(message.file_name ?? '')
 
   const handleCopy = async () => {
     try {
@@ -104,21 +109,46 @@ export default function MessageBubble({ message, isMine, onReply, onOpenTxt }: M
               </div>
             )
           ) : message.type === 'file' ? (
-            <button
-              type="button"
-              onClick={() => onOpenTxt(message)}
-              className="flex w-full items-center gap-3 rounded-xl px-1 py-1 text-left"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-950">
-                <FileText className="h-5 w-5 text-zinc-300" />
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-medium">{message.file_name ?? 'file.txt'}</span>
-                <span className="block text-xs text-zinc-400">
-                  {message.file_size != null ? formatFileSize(message.file_size) : 'Text file'} · Tap to view
+            isTxt ? (
+              <button
+                type="button"
+                onClick={() => onOpenTxt(message)}
+                className="flex w-full items-center gap-3 rounded-xl px-1 py-1 text-left"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-950">
+                  <FileText className="h-5 w-5 text-zinc-300" />
                 </span>
-              </span>
-            </button>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium">{message.file_name ?? 'file.txt'}</span>
+                  <span className="block text-xs text-zinc-400">
+                    {message.file_size != null ? formatFileSize(message.file_size) : 'Text file'} · Tap to view
+                  </span>
+                </span>
+              </button>
+            ) : fileUrl ? (
+              <a
+                href={fileUrl}
+                download={message.file_name ?? undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center gap-3 rounded-xl px-1 py-1 text-left"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-950">
+                  <File className="h-5 w-5 text-zinc-300" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">{message.file_name ?? 'file'}</span>
+                  <span className="block text-xs text-zinc-400">
+                    {message.file_size != null ? formatFileSize(message.file_size) : 'File'} · Tap to download
+                  </span>
+                </span>
+                <Download className="h-4 w-4 shrink-0 text-zinc-500" />
+              </a>
+            ) : (
+              <div className="flex items-center gap-3 px-1 py-1 text-xs text-zinc-500">
+                Loading file…
+              </div>
+            )
           ) : (
             <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
           )}

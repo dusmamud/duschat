@@ -7,6 +7,7 @@ export { supabase } from './supabase'
 
 const BUCKET = 'chat-files'
 const MAX_TXT_BYTES = 2 * 1024 * 1024 // 2 MB
+const MAX_FILE_BYTES = 10 * 1024 * 1024 // 10 MB (bucket limit)
 
 export function formatFileSize(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes < 0) return '0 B'
@@ -26,10 +27,41 @@ export interface UploadedImage {
   publicUrl?: string
 }
 
-export interface UploadedTxt {
+export interface UploadedFile {
   path: string
   fileName: string
   fileSize: number
+}
+
+/** Kept for older imports — same shape as UploadedFile. */
+export type UploadedTxt = UploadedFile
+
+/** True when the file is a `.txt` file (by extension or MIME type). */
+export function isTxtFile(fileName: string, fileType = ''): boolean {
+  return fileName.toLowerCase().endsWith('.txt') || fileType === 'text/plain'
+}
+
+export function isImageFile(fileType: string): boolean {
+  return fileType.startsWith('image/')
+}
+
+/**
+ * Upload any file as-is (max 10 MB, the bucket limit) to
+ * `chat-files/<userId>/<uuid>.<ext>`. The original extension is kept so the
+ * receiver sees the real file name. Only `.txt` files get the popup viewer;
+ * every other file is a download attachment.
+ */
+export async function uploadFile(file: File, userId: string): Promise<UploadedFile> {
+  if (file.size > MAX_FILE_BYTES) {
+    throw new Error('File must be 10 MB or smaller.')
+  }
+  const ext = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')) : ''
+  const path = `${userId}/${crypto.randomUUID()}${ext}`
+  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+    contentType: file.type || 'application/octet-stream',
+  })
+  if (error) throw new Error(error.message)
+  return { path, fileName: file.name, fileSize: file.size }
 }
 
 /**

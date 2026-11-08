@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Loader2, MessageCircle } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase, deleteAllChats } from '@/lib/supabase'
-import { uploadImage, uploadTxt } from '@/lib/files'
+import { uploadFile, uploadImage, uploadTxt, isImageFile, isTxtFile } from '@/lib/files'
 import { useMessages } from '@/hooks/useMessages'
 import { useOtherUser } from '@/hooks/useOtherUser'
 import ChatHeader from '@/components/ChatHeader'
@@ -63,11 +63,19 @@ export default function Chat() {
     }
   }
 
-  const handlePickTxt = async (file: File) => {
+  // Any file can be attached: images stay inline, .txt files open in the
+  // popup viewer, and every other file is a download attachment.
+  const handlePickFile = async (file: File) => {
     setUploading(true)
     setUploadError(null)
     try {
-      const uploaded = await uploadTxt(file, user.id)
+      if (isImageFile(file.type)) {
+        await handlePickImage(file)
+        return
+      }
+      const uploaded = isTxtFile(file.name, file.type)
+        ? await uploadTxt(file, user.id)
+        : await uploadFile(file, user.id)
       const { error: insertError } = await supabase.from('messages').insert({
         sender_id: user.id,
         type: 'file',
@@ -117,7 +125,7 @@ export default function Chat() {
               <MessageCircle className="h-8 w-8 text-zinc-700" />
               <p className="text-sm font-medium text-zinc-300">No messages yet</p>
               <p className="max-w-xs text-xs text-zinc-500">
-                Say hi to {otherUser?.name ?? 'the other person'} — send text, code, an image, or a .txt file.
+                Say hi to {otherUser?.name ?? 'the other person'} — send text, code, an image, a .txt file, or any other file.
               </p>
             </div>
           ) : (
@@ -153,7 +161,7 @@ export default function Chat() {
           onSendText={(text) => void sendText(text)}
           onSendCode={(code) => void sendCode(code)}
           onPickImage={(file) => void handlePickImage(file)}
-          onPickTxt={(file) => void handlePickTxt(file)}
+          onPickFile={(file) => void handlePickFile(file)}
           replyTarget={replyTarget}
           onCancelReply={() => setReplyTarget(null)}
           disabled={uploading}

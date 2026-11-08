@@ -1,8 +1,5 @@
 # Dus Chat
 
-[![Deploy to Cloudflare Pages](https://github.com/dusmamud/duschat/actions/workflows/deploy.yml/badge.svg)](https://github.com/dusmamud/duschat/actions/workflows/deploy.yml)
-
-
 A private, two-person chat web app. Black theme, realtime messages, and no custom backend — Supabase handles auth, database, realtime, and file storage.
 
 ## Stack
@@ -15,8 +12,8 @@ A private, two-person chat web app. Black theme, realtime messages, and no custo
 ## Features
 
 - Username login (username min. 3 chars, password min. 6 chars — Supabase does not accept less than 6)
-- Realtime text, code snippets (with syntax highlighting + copy), images, and `.txt` files
-- `.txt` viewer popup with copy and download
+- Realtime text, code snippets (with syntax highlighting + copy), images, and files of any type (PDF, ZIP, audio, video, documents — 10 MB max)
+- `.txt` viewer popup with copy and download — only `.txt` files open in the popup; other files download on tap
 - Per-message copy and reply
 - One-click "Delete all chats" from Settings — removes all messages and files for both users
 - Fully responsive, black theme on every screen size

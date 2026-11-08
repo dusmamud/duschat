@@ -92,7 +92,8 @@ create policy "messages_delete_own" on public.messages
 
 -- ---------------------------------------------------------------------------
 -- 4. Storage bucket chat-files (private) + storage RLS
---    Images and .txt files only, 10 MB max per file.
+--    Any file type, 10 MB max per file. Only .txt files open in the popup
+--    viewer; images show inline; every other file is a download attachment.
 -- ---------------------------------------------------------------------------
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
@@ -100,7 +101,7 @@ values (
   'chat-files',
   false,
   10485760,
-  array['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'text/plain']
+  null
 )
 on conflict (id) do update set
   public = excluded.public,
