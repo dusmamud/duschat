@@ -46,7 +46,7 @@ export default function Signup({ onSwitchToLogin, onDone }: SignupProps) {
   } = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
     defaultValues: { username: '', name: '', email: '', password: '' },
-    mode: 'onTouched',
+    mode: 'onSubmit',
   })
 
   const onSubmit = async (values: SignupForm) => {
