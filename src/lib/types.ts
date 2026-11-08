@@ -23,6 +23,10 @@ export interface Message {
   sender?: Profile
   reply?: Message | null
   pending?: boolean
+  /** Stable client-side key for an optimistic message: the temp id it was
+   *  sent with. Carried onto the saved row so the bubble keeps its React
+   *  key when the server row replaces it — no remount, no second pop. */
+  clientId?: string
 }
 
 export interface ReplyTarget {

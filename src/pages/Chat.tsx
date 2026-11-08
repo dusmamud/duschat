@@ -45,7 +45,9 @@ function buildRows(messages: Message[]): RenderRow[] {
     const t = new Date(m.created_at).getTime()
     const showHeader =
       m.sender_id !== prevSender || t - prevTime > GROUP_GAP_MINUTES * 60 * 1000
-    rows.push({ kind: 'message', key: m.id, message: m, showHeader })
+    // Stable key: an optimistic message keeps its temp id as clientId, so
+    // the bubble does not remount when the saved row replaces it.
+    rows.push({ kind: 'message', key: m.clientId ?? m.id, message: m, showHeader })
     prevSender = m.sender_id
     prevTime = t
   }
@@ -124,6 +126,17 @@ export default function Chat() {
   const [flashId, setFlashId] = useState<string | null>(null)
   const [isOnline, setIsOnline] = useState(() => navigator.onLine)
   const lastFailedFileRef = useRef<File | null>(null)
+  // When the first page finished loading: only messages created after
+  // this moment are genuinely new and get the entrance animation.
+  // History (initial load + load-older) never animates.
+  const loadedAtRef = useRef(0)
+  useEffect(() => {
+    if (!loading && loadedAtRef.current === 0) loadedAtRef.current = Date.now()
+  }, [loading])
+  const isNewMessage = useCallback(
+    (m: Message) => new Date(m.created_at).getTime() >= loadedAtRef.current,
+    [],
+  )
 
   useEffect(() => {
     const on = () => setIsOnline(true)
@@ -373,6 +386,7 @@ export default function Chat() {
                     message={row.message}
                     isMine={row.message.sender_id === user.id}
                     showHeader={row.showHeader}
+                    animate={isNewMessage(row.message)}
                     flash={flashId === row.message.id}
                     onReply={handleReply}
                     onOpenTxt={setTxtMessage}

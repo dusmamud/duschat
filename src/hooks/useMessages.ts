@@ -109,14 +109,14 @@ export function useMessages(): UseMessagesResult {
     loadedIdsRef.current = new Set(messages.map((m) => m.id))
   }, [messages])
 
-  const scrollToBottom = useCallback(() => {
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'auto') => {
     const el = listRef.current
-    if (el) el.scrollTop = el.scrollHeight
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior })
   }, [])
 
   const jumpToBottom = useCallback(() => {
     setShowNewMessages(false)
-    scrollToBottom()
+    scrollToBottom('smooth')
   }, [scrollToBottom])
 
   // Attach sender profiles (in-memory map) + replied-to messages to rows.
@@ -289,7 +289,9 @@ export function useMessages(): UseMessagesResult {
               )
               if (pendingIdx >= 0) {
                 const next = [...prev]
-                next[pendingIdx] = hydrated
+                // Keep the optimistic row's clientId: the bubble keeps its
+                // React key, so the swap is a prop update, not a remount.
+                next[pendingIdx] = { ...hydrated, clientId: prev[pendingIdx].clientId }
                 return next
               }
               return [...prev, hydrated]
@@ -360,9 +362,13 @@ export function useMessages(): UseMessagesResult {
   // Auto-scroll to bottom on new messages ONLY when the user is already
   // near the bottom (or the message is their own). Otherwise show the
   // "New messages" pill instead of yanking the scroll position.
+  // The scroll itself is smooth — the list glides to the new message
+  // instead of jumping — except on the very first load, which stays
+  // instant so the page never visibly scrolls on open.
   useEffect(() => {
     if (loading) return
     const grew = messages.length > prevCountRef.current
+    const wasEmpty = prevCountRef.current === 0
     prevCountRef.current = messages.length
     if (!grew) return
     if (justPrependedRef.current) {
@@ -372,7 +378,7 @@ export function useMessages(): UseMessagesResult {
     const last = messages[messages.length - 1]
     if (nearBottomRef.current || (last && last.sender_id === myId)) {
       setShowNewMessages(false)
-      scrollToBottom()
+      scrollToBottom(wasEmpty ? 'auto' : 'smooth')
     } else {
       setShowNewMessages(true)
     }
@@ -438,6 +444,7 @@ export function useMessages(): UseMessagesResult {
         sender: userRef.current ?? undefined,
         reply,
         pending: true,
+        clientId: tempId,
       }
       setMessages((prev) => [...prev, optimistic])
       setReplyTarget(null)
@@ -454,7 +461,11 @@ export function useMessages(): UseMessagesResult {
       }
       const saved = data as Message
       setMessages((prev) =>
-        prev.map((m) => (m.id === tempId ? { ...saved, sender: userRef.current ?? undefined, reply } : m)),
+        prev.map((m) =>
+          m.id === tempId
+            ? { ...saved, sender: userRef.current ?? undefined, reply, clientId: tempId }
+            : m,
+        ),
       )
     },
     [sessionUserId, stopTyping],
@@ -528,6 +539,7 @@ export function useMessages(): UseMessagesResult {
       sender: userRef.current ?? undefined,
       reply,
       pending: true,
+      clientId: tempId,
     }
     setMessages((prev) => [...prev, optimistic])
     return tempId
@@ -563,7 +575,9 @@ export function useMessages(): UseMessagesResult {
       const row = saved as Message
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === tempId ? { ...row, sender: userRef.current ?? undefined, reply } : m,
+          m.id === tempId
+            ? { ...row, sender: userRef.current ?? undefined, reply, clientId: tempId }
+            : m,
         ),
       )
       setReplyTarget(null)

@@ -13,6 +13,8 @@ interface MessageBubbleProps {
   isMine: boolean
   /** First message of a sender group — show avatar + name + time. */
   showHeader: boolean
+  /** Created after the first load — play the entrance animation once. */
+  animate?: boolean
   searchQuery?: string
   /** Briefly step the surface when jumping to it from search. */
   flash?: boolean
@@ -50,6 +52,7 @@ function MessageBubble({
   message,
   isMine,
   showHeader,
+  animate = false,
   searchQuery = '',
   flash,
   onReply,
@@ -143,7 +146,8 @@ function MessageBubble({
   return (
     <div
       id={`msg-${message.id}`}
-      className={`group flex flex-col ${isMine ? 'items-end' : 'items-start'} ${message.pending ? 'opacity-70' : ''} ${flash ? 'flash-message' : ''}`}
+      style={{ transformOrigin: isMine ? 'bottom right' : 'bottom left' }}
+      className={`group flex flex-col transition-opacity duration-200 ${isMine ? 'items-end' : 'items-start'} ${message.pending ? 'opacity-70' : ''} ${animate ? 'animate-message-in' : ''} ${flash ? 'flash-message' : ''}`}
     >
       <div className={`flex max-w-[85%] flex-col sm:max-w-[75%] ${isMine ? 'items-end' : 'items-start'}`}>
         {showHeader && (

@@ -95,6 +95,9 @@ export default function MessageInput({
     setValue('')
     setCodeMode(false)
     clearStaged()
+    // Keep the composer focused so the user can keep typing without
+    // tapping the box again (clicking Send moves focus to the button).
+    textareaRef.current?.focus()
     requestAnimationFrame(() => {
       if (textareaRef.current) textareaRef.current.style.height = 'auto'
     })
@@ -295,7 +298,7 @@ export default function MessageInput({
             onClick={send}
             disabled={!canSend}
             aria-label="Send message"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-ink text-page transition-colors hover:bg-white disabled:opacity-30"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-ink text-page transition-all hover:bg-white active:scale-90 disabled:opacity-30"
           >
             <Send className="h-[18px] w-[18px]" />
           </button>
