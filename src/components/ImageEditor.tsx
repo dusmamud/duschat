@@ -31,29 +31,72 @@ const DUS_THEME: ThemeOverride = {
   },
 }
 
-/** 12 crop ratio presets — the crop tool stays free-form until one is picked. */
-const CROP_PRESETS = [
-  { titleKey: 'cropSquare', descriptionKey: '1:1', ratio: 1 },
-  { titleKey: 'cropClassicTv', descriptionKey: '4:3', ratio: 4 / 3 },
-  { titleKey: 'cropPortraitTv', descriptionKey: '3:4', ratio: 3 / 4 },
-  { titleKey: 'cropWidescreen', descriptionKey: '16:9', ratio: 16 / 9 },
-  { titleKey: 'cropStory', descriptionKey: '9:16', ratio: 9 / 16 },
-  { titleKey: 'cropPhoto', descriptionKey: '3:2', ratio: 3 / 2 },
-  { titleKey: 'cropPhotoPortrait', descriptionKey: '2:3', ratio: 2 / 3 },
-  { titleKey: 'cropFeedPortrait', descriptionKey: '4:5', ratio: 4 / 5 },
-  { titleKey: 'cropFeedLandscape', descriptionKey: '5:4', ratio: 5 / 4 },
-  { titleKey: 'cropCinemascope', descriptionKey: '21:9', ratio: 21 / 9 },
-  { titleKey: 'cropPanorama', descriptionKey: '2:1', ratio: 2 },
-  { titleKey: 'cropWidePhoto', descriptionKey: '7:5', ratio: 7 / 5 },
+/**
+ * 12 crop ratio presets, grouped into 3 folders.
+ * Why folders: Filerobot renders every flat preset in ONE dropdown that
+ * pops up from the bottom toolbar — 17 rows (5 built-in + 12 mine) is
+ * taller than a short viewport, so the top presets (Square 1:1 first)
+ * were clipped off-screen and unreachable. Grouped, the top menu is
+ * only 8 rows (3 folders + 5 built-ins) and every preset stays reachable.
+ */
+const CROP_PRESET_FOLDERS = [
+  {
+    titleKey: 'cropCommon',
+    groups: [
+      {
+        titleKey: 'cropCommonGroup',
+        items: [
+          { titleKey: 'cropSquare', descriptionKey: '1:1', ratio: 1 },
+          { titleKey: 'cropClassicTv', descriptionKey: '4:3', ratio: 4 / 3 },
+          { titleKey: 'cropPortraitTv', descriptionKey: '3:4', ratio: 3 / 4 },
+          { titleKey: 'cropWidescreen', descriptionKey: '16:9', ratio: 16 / 9 },
+          { titleKey: 'cropStory', descriptionKey: '9:16', ratio: 9 / 16 },
+        ],
+      },
+    ],
+  },
+  {
+    titleKey: 'cropPhoto',
+    groups: [
+      {
+        titleKey: 'cropPhotoGroup',
+        items: [
+          { titleKey: 'cropPhotoLandscape', descriptionKey: '3:2', ratio: 3 / 2 },
+          { titleKey: 'cropPhotoPortrait', descriptionKey: '2:3', ratio: 2 / 3 },
+          { titleKey: 'cropFeedPortrait', descriptionKey: '4:5', ratio: 4 / 5 },
+          { titleKey: 'cropFeedLandscape', descriptionKey: '5:4', ratio: 5 / 4 },
+        ],
+      },
+    ],
+  },
+  {
+    titleKey: 'cropWide',
+    groups: [
+      {
+        titleKey: 'cropWideGroup',
+        items: [
+          { titleKey: 'cropCinemascope', descriptionKey: '21:9', ratio: 21 / 9 },
+          { titleKey: 'cropPanorama', descriptionKey: '2:1', ratio: 2 },
+          { titleKey: 'cropWidePhoto', descriptionKey: '7:5', ratio: 7 / 5 },
+        ],
+      },
+    ],
+  },
 ]
 
 const CROP_TRANSLATIONS = {
+  cropCommon: 'Common',
+  cropCommonGroup: 'Common ratios',
+  cropPhoto: 'Photo',
+  cropPhotoGroup: 'Photo ratios',
+  cropWide: 'Wide',
+  cropWideGroup: 'Wide ratios',
   cropSquare: 'Square',
   cropClassicTv: 'Classic TV',
   cropPortraitTv: 'Portrait TV',
   cropWidescreen: 'Widescreen',
   cropStory: 'Story',
-  cropPhoto: 'Photo',
+  cropPhotoLandscape: 'Photo landscape',
   cropPhotoPortrait: 'Photo portrait',
   cropFeedPortrait: 'Feed portrait',
   cropFeedLandscape: 'Feed landscape',
@@ -86,7 +129,7 @@ export default function ImageEditor({ source, fileName, fileType, onSave, onClos
         tabsIds={[TABS.ADJUST, TABS.FINETUNE, TABS.FILTERS, TABS.ANNOTATE, TABS.RESIZE]}
         defaultTabId={TABS.ADJUST}
         defaultToolId={TOOLS.CROP}
-        Crop={{ presetsItems: CROP_PRESETS }}
+        Crop={{ presetsFolders: CROP_PRESET_FOLDERS }}
         translations={CROP_TRANSLATIONS}
         annotationsCommon={{ fill: AMBER, stroke: AMBER, strokeWidth: 3 }}
         Pen={{ strokeWidth: 3, lineCap: 'round' }}
