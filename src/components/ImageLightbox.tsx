@@ -72,7 +72,7 @@ export default function ImageLightbox({ url, fileName, onClose }: ImageLightboxP
           src={url}
           alt={fileName}
           style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}
-          className="max-h-full max-w-full object-contain transition-transform duration-200 ease-smooth"
+          className={`max-h-full max-w-full object-contain transition-transform duration-200 ease-smooth ${scale === 1 ? 'cursor-zoom-in' : 'cursor-zoom-out'}`}
           onClick={() => setScale((s) => (s === 1 ? 2 : 1))}
         />
       </div>

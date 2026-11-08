@@ -49,6 +49,22 @@ svg.lucide { stroke-width: 1.5; }
 /* Visible keyboard focus everywhere: one amber ring. */
 :focus-visible { outline: 2px solid var(--color-amber); outline-offset: 2px; }
 
+/* Cursor: Tailwind v4 removed `cursor: pointer` from buttons (its
+   preflight now leaves them at `cursor: default`, like plain browsers).
+   That made every clickable thing in the app — Send, Copy, Reply,
+   the underlined Sign up / Log in switches, zoom buttons — show the
+   plain arrow, so nothing looked clickable. Restored here, once,
+   for every button and link: pointer when clickable, not-allowed
+   when disabled. Text, inputs and message bubbles keep their
+   native cursors (text / default) — they are not clickable. */
+button:not(:disabled),
+a[href] {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+
 /* Search highlight inside messages and file names. */
 mark {
   background: rgba(232, 163, 61, 0.28);
