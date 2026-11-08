@@ -317,6 +317,7 @@ export default function MessageInput({
             fileType={stagedFile.type}
             onSave={handleEditorSave}
             onClose={() => setEditorOpen(false)}
+            onError={(msg) => showPasteError(msg)}
           />
         </Suspense>
       )}

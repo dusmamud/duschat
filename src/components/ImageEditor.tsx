@@ -9,6 +9,8 @@ interface ImageEditorProps {
   /** Called with the edited image file; the editor closes itself first. */
   onSave: (file: File) => void
   onClose: () => void
+  /** Shown in the composer when the export itself fails — never silent. */
+  onError: (message: string) => void
 }
 
 const AMBER = '#e8a33d'
@@ -67,7 +69,7 @@ const CROP_TRANSLATIONS = {
  * polygon, text. Saving exports at high resolution; the edited file
  * replaces the staged one in the composer.
  */
-export default function ImageEditor({ source, fileName, fileType, onSave, onClose }: ImageEditorProps) {
+export default function ImageEditor({ source, fileName, fileType, onSave, onClose, onError }: ImageEditorProps) {
   const baseName = fileName.replace(/\.[^.]*$/, '') || 'image'
   const savedType =
     fileType === 'image/jpeg' || fileType === 'image/jpg'
@@ -95,23 +97,34 @@ export default function ImageEditor({ source, fileName, fileType, onSave, onClos
         defaultSavedImageName={baseName}
         defaultSavedImageType={savedType}
         defaultSavedImageQuality={0.92}
-        savingPixelRatio={2}
+        // Export at the original resolution: 2x upscales a phone photo to
+        // ~8000px and the giant base64 export stalls or dies. The upload
+        // step downscales to 1600px webp anyway, so 1x loses nothing.
+        savingPixelRatio={1}
         previewPixelRatio={typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1}
         closeAfterSave
         disableSaveIfNoChanges
         onSave={async (saved) => {
           const mimeType = saved.mimeType || 'image/png'
           const ext = saved.extension || mimeType.split('/')[1] || 'png'
-          let blob: Blob | null = null
-          if (saved.imageBase64) {
-            blob = await (await fetch(saved.imageBase64)).blob()
-          } else if (saved.imageCanvas) {
-            blob = await new Promise<Blob | null>((resolve) =>
-              saved.imageCanvas!.toBlob((b) => resolve(b), mimeType, 0.92),
-            )
+          try {
+            let blob: Blob | null = null
+            if (saved.imageCanvas) {
+              // Primary path: the exported canvas is already in memory.
+              // toBlob avoids the giant base64 string + fetch round-trip
+              // that made big phone photos slow or fail to come back.
+              blob = await new Promise<Blob | null>((resolve) =>
+                saved.imageCanvas!.toBlob((b) => resolve(b), mimeType, 0.92),
+              )
+            }
+            if (!blob && saved.imageBase64) {
+              blob = await (await fetch(saved.imageBase64)).blob()
+            }
+            if (!blob) throw new Error('Could not export the edited image.')
+            onSave(new File([blob], `${baseName}.${ext}`, { type: blob.type || mimeType }))
+          } catch (err) {
+            onError(err instanceof Error ? err.message : 'Could not save the edited image.')
           }
-          if (!blob) return
-          onSave(new File([blob], `${baseName}.${ext}`, { type: blob.type || mimeType }))
         }}
         onClose={() => onClose()}
       />
