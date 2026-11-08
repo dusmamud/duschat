@@ -10,38 +10,38 @@ interface ChatHeaderProps {
   onOpenSettings: () => void
 }
 
+/** Two small dots side by side — the signature. Amber when the other person
+ *  is here, muted when they are not. */
+function PresenceDots({ online, checking }: { online: boolean; checking: boolean }) {
+  const color = checking ? 'bg-ink-3 opacity-50' : online ? 'bg-amber' : 'bg-ink-3 opacity-40'
+  return (
+    <span className="flex shrink-0 items-center gap-1" aria-hidden>
+      <span className={`h-2 w-2 rounded-full ${color}`} />
+      <span className={`h-2 w-2 rounded-full ${color}`} />
+    </span>
+  )
+}
+
 export default function ChatHeader({ otherUser, otherOnline, searchActive, onToggleSearch, onOpenSettings }: ChatHeaderProps) {
   const name = otherUser?.name ?? 'Dus Chat'
   const online = otherOnline ?? false
   const statusText = otherUser
     ? otherOnline === null
-      ? 'Checking…'
+      ? 'Checking'
       : online
         ? 'Online'
         : 'Offline'
-    : 'Waiting for the other person…'
+    : 'Waiting for the other person'
 
   return (
-    <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-zinc-900 bg-[#050505]/90 px-3 py-2.5 backdrop-blur sm:px-4">
-      <img
-        src="/logo.png"
-        alt="Dus Chat logo"
-        className="h-10 w-10 shrink-0 rounded-xl shadow-[0_0_18px_rgba(99,102,241,0.35)]"
-      />
+    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-page px-4 sm:h-16">
+      <img src="/logo.png" alt="Dus Chat mark" className="h-10 w-10 shrink-0" />
       <div className="min-w-0 flex-1">
-        <h1 className="flex items-center gap-2 truncate text-base font-semibold text-zinc-100">
+        <h1 className="flex items-center gap-2 truncate text-base font-medium text-ink">
           <span className="truncate">{name}</span>
-          {otherUser && (
-            <span
-              className={`h-2.5 w-2.5 shrink-0 rounded-full ${
-                online ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]' : 'bg-zinc-600'
-              } ${otherOnline === null ? 'opacity-50' : ''}`}
-              title={statusText}
-              aria-label={statusText}
-            />
-          )}
+          {otherUser && <PresenceDots online={online} checking={otherOnline === null} />}
         </h1>
-        <p className="truncate text-xs text-zinc-500">
+        <p className="truncate text-xs text-ink-3" aria-label={statusText}>
           Dus Chat · {statusText}
         </p>
       </div>
@@ -50,19 +50,19 @@ export default function ChatHeader({ otherUser, otherOnline, searchActive, onTog
         onClick={onToggleSearch}
         aria-label={searchActive ? 'Close search' : 'Search messages'}
         aria-pressed={searchActive}
-        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors ${
-          searchActive ? 'bg-indigo-500/20 text-indigo-300' : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] transition-colors ${
+          searchActive ? 'bg-raised text-amber' : 'text-ink-2 hover:bg-raised hover:text-ink'
         }`}
       >
-        <Search className="h-5 w-5" />
+        <Search className="h-[18px] w-[18px]" />
       </button>
       <button
         type="button"
         onClick={onOpenSettings}
         aria-label="Settings"
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-white"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink"
       >
-        <Settings className="h-5 w-5" />
+        <Settings className="h-[18px] w-[18px]" />
       </button>
     </header>
   )

@@ -100,33 +100,33 @@ export default function TxtViewer({ message, onClose, onCopyError }: TxtViewerPr
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center sm:p-6"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-deep/80 sm:items-center sm:p-6"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={fileName}
     >
       <div
-        className="flex max-h-[85dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-zinc-800 bg-zinc-950 shadow-2xl sm:w-[92vw] sm:max-w-2xl sm:rounded-xl"
+        className="flex max-h-[85dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-line bg-card shadow-panel sm:w-[92vw] sm:max-w-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 border-b border-zinc-800 px-4 py-3">
-          <FileText className="h-5 w-5 shrink-0 text-indigo-300" />
+        <div className="flex items-center gap-3 border-b border-line px-4 py-3">
+          <FileText className="h-[18px] w-[18px] shrink-0 text-ink-2" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-zinc-100">{fileName}</p>
+            <p className="truncate text-sm font-medium text-ink">{fileName}</p>
             {message.file_size != null && (
-              <p className="text-xs text-zinc-500">{formatFileSize(message.file_size)}</p>
+              <p className="font-mono text-xs text-ink-3">{formatFileSize(message.file_size)}</p>
             )}
           </div>
           <button
             type="button"
             onClick={() => void handleCopy()}
             disabled={!text}
-            className="flex h-11 shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-800 disabled:opacity-40"
+            className="flex h-10 shrink-0 items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-xs text-ink-2 transition-colors hover:bg-raised hover:text-ink disabled:opacity-40"
           >
             {copied ? (
               <>
-                <Check className="h-4 w-4 text-emerald-400" />
+                <Check className="h-4 w-4 text-ok" />
                 <span className="hidden sm:inline">Copied</span>
               </>
             ) : (
@@ -140,7 +140,7 @@ export default function TxtViewer({ message, onClose, onCopyError }: TxtViewerPr
             type="button"
             onClick={handleDownload}
             disabled={!text}
-            className="flex h-11 shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-800 disabled:opacity-40"
+            className="flex h-10 shrink-0 items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-xs text-ink-2 transition-colors hover:bg-raised hover:text-ink disabled:opacity-40"
           >
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline">Download</span>
@@ -149,34 +149,34 @@ export default function TxtViewer({ message, onClose, onCopyError }: TxtViewerPr
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink"
           >
-            <X className="h-5 w-5" />
+            <X className="h-[18px] w-[18px]" />
           </button>
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto p-4">
           {loading && (
-            <div className="flex items-center justify-center gap-2 py-16 text-sm text-zinc-400">
+            <div className="flex items-center justify-center gap-2 py-16 text-sm text-ink-2">
               <Loader2 className="h-5 w-5 animate-spin" />
-              Loading file…
+              Loading file
             </div>
           )}
           {error && !loading && (
             <div className="py-16 text-center">
-              <p className="text-sm text-red-400">{error}</p>
-              <p className="mt-1 text-xs text-zinc-500">Try again later.</p>
+              <p className="text-sm text-danger">{error}</p>
+              <p className="mt-1 text-xs text-ink-3">Try again later</p>
             </div>
           )}
           {!loading && !error && text !== null && (
             <>
               {truncated && (
-                <p className="mb-3 rounded-md border border-amber-900/60 bg-amber-950/40 px-3 py-2 text-xs text-amber-300">
+                <p className="mb-3 rounded-lg border border-amber/25 bg-amber/10 px-3 py-2 text-xs text-amber">
                   Showing the first 200 KB of this file. Download it to see the full
                   content.
                 </p>
               )}
-              <pre className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-200 break-words">
+              <pre className="text-sm leading-relaxed whitespace-pre-wrap text-ink break-words">
                 {text}
               </pre>
             </>

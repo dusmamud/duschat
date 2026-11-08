@@ -26,40 +26,40 @@ export default function ImageLightbox({ url, fileName, onClose }: ImageLightboxP
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-black/95 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex flex-col bg-deep/95"
       role="dialog"
       aria-modal="true"
       aria-label={fileName}
       onClick={onClose}
     >
       <div className="flex items-center justify-between gap-2 px-3 py-2.5">
-        <p className="min-w-0 flex-1 truncate px-1 text-sm text-zinc-300">{fileName}</p>
+        <p className="min-w-0 flex-1 truncate px-1 text-sm text-ink-2">{fileName}</p>
         <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
             onClick={zoomOut}
             disabled={scale <= 1}
             aria-label="Zoom out"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
+            className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink disabled:opacity-40"
           >
-            <ZoomOut className="h-5 w-5" />
+            <ZoomOut className="h-[18px] w-[18px]" />
           </button>
           <button
             type="button"
             onClick={zoomIn}
             disabled={scale >= 3}
             aria-label="Zoom in"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
+            className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink disabled:opacity-40"
           >
-            <ZoomIn className="h-5 w-5" />
+            <ZoomIn className="h-[18px] w-[18px]" />
           </button>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-zinc-300 hover:bg-zinc-800"
+            className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink"
           >
-            <X className="h-5 w-5" />
+            <X className="h-[18px] w-[18px]" />
           </button>
         </div>
       </div>
@@ -72,12 +72,12 @@ export default function ImageLightbox({ url, fileName, onClose }: ImageLightboxP
           src={url}
           alt={fileName}
           style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}
-          className="max-h-full max-w-full object-contain transition-transform"
+          className="max-h-full max-w-full object-contain transition-transform duration-200 ease-smooth"
           onClick={() => setScale((s) => (s === 1 ? 2 : 1))}
         />
       </div>
 
-      <p className="py-3 text-center text-xs text-zinc-500">
+      <p className="py-3 text-center text-xs text-ink-3">
         Tap the image to toggle zoom · Scroll to pan when zoomed
       </p>
     </div>

@@ -75,9 +75,9 @@ function SkeletonList() {
     <div className="flex flex-col gap-4" aria-label="Loading messages">
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <div key={i} className={`flex flex-col ${i % 2 === 0 ? 'items-start' : 'items-end'}`}>
-          <div className="mb-1.5 h-3 w-20 animate-pulse rounded bg-zinc-800" />
+          <div className="mb-1.5 h-3 w-20 rounded bg-raised" />
           <div
-            className={`h-10 animate-pulse rounded-2xl bg-zinc-800 ${
+            className={`h-10 rounded-2xl bg-raised ${
               i % 3 === 0 ? 'w-56' : i % 3 === 1 ? 'w-40' : 'w-64'
             }`}
           />
@@ -148,7 +148,7 @@ export default function Chat() {
 
   if (authLoading || !user) {
     return (
-      <div className="flex h-dvh items-center justify-center bg-[#050505] text-zinc-400">
+      <div className="flex h-dvh items-center justify-center bg-page text-ink-3">
         <Loader2 className="h-6 w-6 animate-spin" />
       </div>
     )
@@ -230,33 +230,33 @@ export default function Chat() {
   }
 
   return (
-    <div className="h-dvh bg-[#050505] text-zinc-100">
-      <div className="mx-auto flex h-full w-full max-w-3xl flex-col border-x border-zinc-900">
-        <ChatHeader
-          otherUser={otherUser}
-          otherOnline={otherOnline}
-          searchActive={searchOpen}
-          onToggleSearch={() => {
-            setSearchOpen((v) => !v)
-            setSearchQuery('')
-          }}
-          onOpenSettings={() => setSettingsOpen(true)}
-        />
+    <div className="flex h-dvh flex-col bg-page text-ink">
+      <ChatHeader
+        otherUser={otherUser}
+        otherOnline={otherOnline}
+        searchActive={searchOpen}
+        onToggleSearch={() => {
+          setSearchOpen((v) => !v)
+          setSearchQuery('')
+        }}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
 
-        {searchOpen && (
-          <div className="border-b border-zinc-900 bg-[#050505] px-3 py-2 sm:px-4">
-            <div className="flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950 px-3">
-              <Search className="h-4 w-4 shrink-0 text-zinc-500" />
+      {searchOpen && (
+        <div className="border-b border-line bg-page">
+          <div className="mx-auto w-full max-w-3xl px-4 py-2">
+            <div className="flex items-center gap-2 rounded-[10px] border border-line bg-card px-3">
+              <Search className="h-4 w-4 shrink-0 text-ink-3" />
               <input
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search messages…"
+                placeholder="Search messages"
                 aria-label="Search messages"
-                className="min-w-0 flex-1 bg-transparent py-2.5 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none"
+                className="min-w-0 flex-1 bg-transparent py-2.5 text-sm text-ink placeholder:text-ink-3 focus:outline-none"
               />
               {searchQuery && (
-                <span className="shrink-0 text-xs text-zinc-500">
+                <span className="shrink-0 font-mono text-xs text-ink-3">
                   {searchMatches.length} match{searchMatches.length === 1 ? '' : 'es'}
                 </span>
               )}
@@ -267,47 +267,49 @@ export default function Chat() {
                   setSearchOpen(false)
                 }}
                 aria-label="Close search"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] text-ink-3 transition-colors hover:bg-raised hover:text-ink"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {!isOnline && (
-          <div className="flex items-center justify-center gap-2 border-b border-amber-900/60 bg-amber-950/50 px-4 py-2 text-xs text-amber-200">
-            <WifiOff className="h-3.5 w-3.5 shrink-0" />
-            You&apos;re offline — messages will send when reconnected
-          </div>
-        )}
-        {isOnline && !channelConnected && !loading && (
-          <div className="flex items-center justify-center gap-2 border-b border-zinc-900 bg-zinc-950 px-4 py-1.5 text-xs text-zinc-500">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Reconnecting…
-          </div>
-        )}
+      {!isOnline && (
+        <div className="flex items-center justify-center gap-2 border-b border-amber/25 bg-amber/10 px-4 py-2 text-xs text-amber">
+          <WifiOff className="h-3.5 w-3.5 shrink-0" />
+          You&apos;re offline — messages will send when reconnected
+        </div>
+      )}
+      {isOnline && !channelConnected && !loading && (
+        <div className="flex items-center justify-center gap-2 border-b border-line bg-card px-4 py-1.5 text-xs text-ink-3">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Reconnecting
+        </div>
+      )}
 
-        <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-4">
+      <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-3xl px-4 py-4">
           {/* Top sentinel for infinite scroll — loads older pages. */}
           <div ref={topSentinelRef} aria-hidden className="h-px w-full" />
           {loadingMore && (
-            <p className="pb-3 text-center text-xs text-zinc-500">Loading older messages…</p>
+            <p className="pb-3 text-center text-xs text-ink-3">Loading older messages</p>
           )}
           {loading ? (
             <SkeletonList />
           ) : query ? (
             searchMatches.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 py-24 text-center">
-                <Search className="h-8 w-8 text-zinc-700" />
-                <p className="text-sm font-medium text-zinc-300">No matches for “{query}”</p>
-                <p className="max-w-xs text-xs text-zinc-500">
-                  Search only covers messages already loaded in this chat.
+                <Search className="h-8 w-8 text-ink-3" />
+                <p className="text-sm font-medium text-ink">No matches for “{query}”</p>
+                <p className="max-w-xs text-xs text-ink-3">
+                  Search covers messages already loaded here
                 </p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                <p className="text-center text-xs text-zinc-500">
+                <p className="text-center text-xs text-ink-3">
                   {searchMatches.length} match{searchMatches.length === 1 ? '' : 'es'} — tap one to jump to it
                 </p>
                 {searchMatches.map((m) => (
@@ -315,14 +317,14 @@ export default function Chat() {
                     key={m.id}
                     type="button"
                     onClick={() => jumpToMessage(m.id)}
-                    className="rounded-2xl border border-zinc-800 bg-zinc-950 px-3.5 py-3 text-left transition-colors hover:border-indigo-500/40 hover:bg-zinc-900"
+                    className="rounded-xl border border-line bg-card px-3.5 py-3 text-left transition-colors hover:border-line-strong hover:bg-raised"
                   >
-                    <span className="mb-1 block text-[11px] text-zinc-500">
+                    <span className="mb-1 block font-mono text-[11px] text-ink-3">
                       {m.sender_id === user.id ? 'You' : (m.sender?.name ?? m.sender?.username ?? 'Unknown')}
                       {' · '}
                       {formatSearchDate(new Date(m.created_at))}
                     </span>
-                    <span className="block truncate text-sm text-zinc-200">
+                    <span className="block truncate text-sm text-ink">
                       {m.content
                         ? highlightSearchText(m.content, query)
                         : highlightSearchText(m.file_name ?? 'Attachment', query)}
@@ -333,33 +335,31 @@ export default function Chat() {
             )
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-              <img
-                src="/logo.png"
-                alt="Dus Chat logo"
-                className="h-16 w-16 rounded-3xl shadow-[0_0_32px_rgba(99,102,241,0.4)]"
-              />
-              <p className="text-base font-medium text-zinc-200">No messages yet</p>
-              <p className="max-w-xs text-sm text-zinc-500">
-                Say hi to {otherUser?.name ?? 'the other person'} — send text, code, an image, a .txt file, or any other file.
+              <img src="/logo.png" alt="Dus Chat mark" className="h-16 w-16" />
+              <span className="flex gap-1.5" aria-hidden>
+                <span className="h-2 w-2 rounded-full bg-amber" />
+                <span className="h-2 w-2 rounded-full bg-amber" />
+              </span>
+              <p className="text-base font-medium text-ink">No messages yet</p>
+              <p className="max-w-xs text-sm text-ink-2">
+                Say hi to {otherUser?.name ?? 'the other person'} — text, code, images and files, just between the two of you
               </p>
               <button
                 type="button"
                 onClick={() => document.getElementById('composer')?.focus()}
-                className="mt-1 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/25 transition-opacity hover:opacity-90"
+                className="mt-1 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-page transition-colors hover:bg-white"
               >
-                Send your first message
+                Send a message
               </button>
             </div>
           ) : (
             <div className="flex flex-col gap-1.5">
               {rows?.map((row) =>
                 row.kind === 'separator' ? (
-                  <div key={row.key} className="my-3 flex items-center gap-3">
-                    <span className="h-px flex-1 bg-zinc-800" />
-                    <span className="rounded-full border border-zinc-800 bg-zinc-950 px-3 py-1 text-[11px] font-medium text-zinc-400">
-                      {row.label}
-                    </span>
-                    <span className="h-px flex-1 bg-zinc-800" />
+                  <div key={row.key} className="my-4 flex items-center gap-3">
+                    <span className="h-px flex-1 bg-line" />
+                    <span className="font-mono text-[11px] text-ink-3">{row.label}</span>
+                    <span className="h-px flex-1 bg-line" />
                   </div>
                 ) : (
                   <MessageBubble
@@ -380,70 +380,74 @@ export default function Chat() {
             </div>
           )}
         </div>
+      </div>
 
-        {error && (
-          <p role="alert" className="border-t border-zinc-900 bg-red-950/40 px-4 py-2 text-xs text-red-300">
-            {error}
-          </p>
-        )}
-        {uploadError && (
-          <div role="alert" className="flex items-center justify-between gap-3 border-t border-zinc-900 bg-red-950/40 px-4 py-2">
-            <p className="min-w-0 flex-1 truncate text-xs text-red-300">{uploadError}</p>
-            <button
-              type="button"
-              onClick={handleRetryUpload}
-              className="shrink-0 rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-500"
-            >
-              Retry
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setUploadError(null)
-                lastFailedFileRef.current = null
-              }}
-              aria-label="Dismiss upload error"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-red-300 hover:bg-red-900/60"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-        {uploading && (
-          <div className="border-t border-zinc-900 px-4 py-2.5">
-            <div className="flex items-center gap-2 text-xs text-zinc-400">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              <span className="min-w-0 flex-1 truncate">
-                Uploading {uploading.fileName}…
-              </span>
-            </div>
-            <div className="mt-2 h-1 overflow-hidden rounded-full bg-zinc-800">
-              <div className="h-full w-1/2 animate-pulse rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" />
-            </div>
-          </div>
-        )}
-
-        {typingName && (
-          <div className="flex items-center gap-2 border-t border-zinc-900 bg-[#050505] px-4 py-2 text-xs text-zinc-400">
-            <span className="flex gap-1" aria-hidden>
-              <span className="typing-dot h-1.5 w-1.5 rounded-full bg-indigo-400" />
-              <span className="typing-dot h-1.5 w-1.5 rounded-full bg-indigo-400" />
-              <span className="typing-dot h-1.5 w-1.5 rounded-full bg-indigo-400" />
+      {error && (
+        <p role="alert" className="border-t border-line bg-danger-soft px-4 py-2 text-xs text-danger">
+          {error}
+        </p>
+      )}
+      {uploadError && (
+        <div role="alert" className="flex items-center justify-between gap-3 border-t border-line bg-danger-soft px-4 py-2">
+          <p className="min-w-0 flex-1 truncate text-xs text-danger">{uploadError}</p>
+          <button
+            type="button"
+            onClick={handleRetryUpload}
+            className="shrink-0 rounded-lg bg-danger px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-danger/90"
+          >
+            Retry
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setUploadError(null)
+              lastFailedFileRef.current = null
+            }}
+            aria-label="Dismiss upload error"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] text-danger transition-colors hover:bg-danger/20"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+      {uploading && (
+        <div className="border-t border-line px-4 py-2.5">
+          <div className="mx-auto flex w-full max-w-3xl items-center gap-2 text-xs text-ink-2">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <span className="min-w-0 flex-1 truncate">
+              Uploading {uploading.fileName}
             </span>
-            {typingName} is typing…
           </div>
-        )}
+          <div className="mx-auto mt-2 h-1 w-full max-w-3xl overflow-hidden rounded-full bg-raised">
+            <div className="upload-bar h-full w-2/5 rounded-full bg-amber" />
+          </div>
+        </div>
+      )}
 
-        <div className="relative">
-          {showNewMessages && (
-            <button
-              type="button"
-              onClick={jumpToBottom}
-              className="absolute -top-11 left-1/2 z-10 -translate-x-1/2 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 px-4 py-1.5 text-xs font-medium whitespace-nowrap text-white shadow-lg shadow-indigo-500/25 hover:opacity-90"
-            >
-              ↓ New messages
-            </button>
-          )}
+      {typingName && (
+        <div className="flex items-center gap-2 border-t border-line bg-page px-4 py-2 text-xs text-ink-2">
+          <div className="mx-auto flex w-full max-w-3xl items-center gap-2">
+            <span className="flex gap-1" aria-hidden>
+              <span className="typing-dot h-1.5 w-1.5 rounded-full bg-amber" />
+              <span className="typing-dot h-1.5 w-1.5 rounded-full bg-amber" />
+              <span className="typing-dot h-1.5 w-1.5 rounded-full bg-amber" />
+            </span>
+            {typingName} is typing
+          </div>
+        </div>
+      )}
+
+      <div className="relative border-t border-line bg-page">
+        {showNewMessages && (
+          <button
+            type="button"
+            onClick={jumpToBottom}
+            className="absolute -top-12 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-ink px-4 py-1.5 text-xs font-medium whitespace-nowrap text-page shadow-panel transition-colors hover:bg-white"
+          >
+            ↓ New messages
+          </button>
+        )}
+        <div className="mx-auto w-full max-w-3xl">
           <MessageInput
             onSendText={(text) => void sendText(text)}
             onSendCode={(code) => void sendCode(code)}
@@ -455,31 +459,31 @@ export default function Chat() {
             disabled={uploading !== null}
           />
         </div>
-
-        <Suspense fallback={null}>
-          {settingsOpen && (
-            <SettingsMenu
-              onDeleteAll={handleDeleteAll}
-              onLogout={() => void signOut()}
-              onClose={() => setSettingsOpen(false)}
-            />
-          )}
-          <TxtViewer
-            message={txtMessage}
-            onClose={() => setTxtMessage(null)}
-            onCopyError={setToast}
-          />
-          {lightbox && (
-            <ImageLightbox
-              url={lightbox.url}
-              fileName={lightbox.fileName}
-              onClose={() => setLightbox(null)}
-            />
-          )}
-        </Suspense>
-
-        {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
       </div>
+
+      <Suspense fallback={null}>
+        {settingsOpen && (
+          <SettingsMenu
+            onDeleteAll={handleDeleteAll}
+            onLogout={() => void signOut()}
+            onClose={() => setSettingsOpen(false)}
+          />
+        )}
+        <TxtViewer
+          message={txtMessage}
+          onClose={() => setTxtMessage(null)}
+          onCopyError={setToast}
+        />
+        {lightbox && (
+          <ImageLightbox
+            url={lightbox.url}
+            fileName={lightbox.fileName}
+            onClose={() => setLightbox(null)}
+          />
+        )}
+      </Suspense>
+
+      {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
     </div>
   )
 }

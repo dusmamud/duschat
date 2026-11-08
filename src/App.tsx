@@ -10,7 +10,7 @@ const Chat = lazy(() => import('./pages/Chat'))
 
 function LoadingScreen() {
   return (
-    <div className="flex h-dvh items-center justify-center bg-black text-zinc-400">
+    <div className="flex h-dvh items-center justify-center bg-page text-ink-3">
       <Loader2 className="h-6 w-6 animate-spin" />
     </div>
   )

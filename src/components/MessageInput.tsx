@@ -63,14 +63,14 @@ export default function MessageInput({
   }
 
   return (
-    <div className="border-t border-zinc-900 bg-[#050505] px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-4">
+    <div className="px-4 pt-2 pb-[max(12px,env(safe-area-inset-bottom))]">
       {replyTarget && (
-        <div className="mb-2 flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2">
+        <div className="mb-2 flex items-center gap-2 rounded-lg border border-line bg-card px-3 py-2">
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-zinc-300">Replying to {replyTarget.senderName}</p>
-            <p className="truncate text-xs text-zinc-500">{replyTarget.content || replyTarget.file_name || 'Attachment'}</p>
+            <p className="text-xs font-medium text-ink">Replying to {replyTarget.senderName}</p>
+            <p className="truncate text-xs text-ink-3">{replyTarget.content || replyTarget.file_name || 'Attachment'}</p>
           </div>
-          <button type="button" onClick={onCancelReply} aria-label="Cancel reply" className="flex h-11 w-11 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">
+          <button type="button" onClick={onCancelReply} aria-label="Cancel reply" className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-3 transition-colors hover:bg-raised hover:text-ink">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -96,18 +96,18 @@ export default function MessageInput({
             onClick={() => imageInputRef.current?.click()}
             disabled={disabled}
             aria-label="Send image"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-40"
+            className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink disabled:opacity-40"
           >
-            <ImagePlus className="h-5 w-5" />
+            <ImagePlus className="h-[18px] w-[18px]" />
           </button>
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
             aria-label="Attach any file"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-40"
+            className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink disabled:opacity-40"
           >
-            <Paperclip className="h-5 w-5" />
+            <Paperclip className="h-[18px] w-[18px]" />
           </button>
           <button
             type="button"
@@ -115,11 +115,11 @@ export default function MessageInput({
             disabled={disabled}
             aria-label="Code mode"
             aria-pressed={codeMode}
-            className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors disabled:opacity-40 ${
-              codeMode ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
+            className={`flex h-10 w-10 items-center justify-center rounded-[10px] transition-colors disabled:opacity-40 ${
+              codeMode ? 'bg-raised text-amber ring-1 ring-amber/40' : 'text-ink-2 hover:bg-raised hover:text-ink'
             }`}
           >
-            <Code2 className="h-5 w-5" />
+            <Code2 className="h-[18px] w-[18px]" />
           </button>
         </div>
 
@@ -136,9 +136,9 @@ export default function MessageInput({
             onTyping()
           }}
           onKeyDown={handleKeyDown}
-          placeholder={codeMode ? 'Paste code...' : 'Message…'}
+          placeholder={codeMode ? 'Paste code' : 'Message'}
           aria-label="Message"
-          className="max-h-[160px] min-h-[44px] flex-1 resize-none rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-[15px] text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500/60 focus:outline-none disabled:opacity-60"
+          className="max-h-[160px] min-h-[44px] flex-1 resize-none rounded-[10px] border border-line bg-raised px-4 py-2.5 text-[15px] text-ink transition-colors placeholder:text-ink-3 focus:border-amber/50 focus:outline-none disabled:opacity-60"
         />
 
         <button
@@ -146,9 +146,9 @@ export default function MessageInput({
           onClick={send}
           disabled={disabled || !value.trim()}
           aria-label="Send message"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/25 transition-opacity hover:opacity-90 disabled:opacity-30"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-ink text-page transition-colors hover:bg-white disabled:opacity-30"
         >
-          <Send className="h-5 w-5" />
+          <Send className="h-[18px] w-[18px]" />
         </button>
       </div>
     </div>

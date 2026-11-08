@@ -39,43 +39,43 @@ export default function SettingsMenu({ onDeleteAll, onLogout, onClose }: Setting
       <button
         type="button"
         aria-label="Close settings"
-        className="absolute inset-0 cursor-default bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 cursor-default bg-deep/60"
         onClick={onClose}
       />
-      <div className="relative w-full overflow-hidden rounded-t-2xl border border-zinc-800 bg-zinc-950 shadow-2xl sm:w-72 sm:rounded-xl">
-        <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
-          <p className="text-sm font-medium text-zinc-100">Settings</p>
+      <div className="relative w-full overflow-hidden rounded-t-2xl border border-line bg-card shadow-panel sm:w-72 sm:rounded-2xl">
+        <div className="flex items-center justify-between border-b border-line px-4 py-3">
+          <p className="text-sm font-medium text-ink">Settings</p>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close settings"
-            className="flex h-9 w-9 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+            className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="p-2 pb-[max(8px,env(safe-area-inset-bottom))]">
           {confirming ? (
             <div className="px-2 py-2">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
-                <p className="text-sm text-zinc-200">
-                  Are you sure? This deletes all messages + files for both users.
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-danger" />
+                <p className="text-sm text-ink">
+                  Are you sure? This deletes all messages and files for both users.
                 </p>
               </div>
-              {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+              {error && <p className="mt-2 text-xs text-danger">{error}</p>}
               <div className="mt-3 flex gap-2">
                 <button
                   type="button"
                   onClick={() => void handleConfirmDelete()}
                   disabled={deleting}
-                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500 disabled:opacity-60"
+                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-lg bg-danger px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-danger/90 disabled:opacity-60"
                 >
                   {deleting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Deleting…
+                      Deleting
                     </>
                   ) : (
                     <>
@@ -91,7 +91,7 @@ export default function SettingsMenu({ onDeleteAll, onLogout, onClose }: Setting
                     setError(null)
                   }}
                   disabled={deleting}
-                  className="h-11 flex-1 rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-200 transition-colors hover:bg-zinc-800 disabled:opacity-60"
+                  className="h-11 flex-1 rounded-lg border border-line-strong px-3 py-2 text-sm text-ink transition-colors hover:bg-raised disabled:opacity-60"
                 >
                   Cancel
                 </button>
@@ -102,12 +102,12 @@ export default function SettingsMenu({ onDeleteAll, onLogout, onClose }: Setting
               <button
                 type="button"
                 onClick={() => setConfirming(true)}
-                className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-red-400 transition-colors hover:bg-red-950/50"
+                className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-danger transition-colors hover:bg-danger-soft"
               >
                 <Trash2 className="h-4 w-4 shrink-0" />
                 <span>
                   <span className="block font-medium">Delete all chats</span>
-                  <span className="block text-xs text-zinc-500">
+                  <span className="block text-xs text-ink-3">
                     Removes every message and file
                   </span>
                 </span>
@@ -118,9 +118,9 @@ export default function SettingsMenu({ onDeleteAll, onLogout, onClose }: Setting
                   onLogout()
                   onClose()
                 }}
-                className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-zinc-200 transition-colors hover:bg-zinc-800"
+                className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-ink transition-colors hover:bg-raised"
               >
-                <LogOut className="h-4 w-4 shrink-0 text-zinc-400" />
+                <LogOut className="h-4 w-4 shrink-0 text-ink-3" />
                 Log out
               </button>
             </>

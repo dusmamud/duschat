@@ -26,23 +26,23 @@ export default function CodeBlock({ code, language = 'text' }: CodeBlockProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-800 bg-[#0a0a0a]">
-      <div className="flex items-center justify-between border-b border-zinc-800 px-3 py-1.5">
-        <span className="text-[11px] font-medium tracking-wide text-zinc-400 uppercase">
-          {language}
+    <div className="overflow-hidden rounded-xl border border-line bg-deep">
+      <div className="flex items-center justify-between border-b border-line px-3 py-1.5">
+        <span className="font-mono text-[11px] text-ink-3">
+          {language === 'text' ? 'Code' : language}
         </span>
         <button
           type="button"
           onClick={() => void handleCopy()}
           aria-label={copied ? 'Copied' : 'Copy code'}
-          className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+          className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ink-2 transition-colors hover:bg-raised hover:text-ink"
         >
           {copyFailed ? (
-            <span className="text-red-400">Copy failed</span>
+            <span className="text-danger">Copy failed</span>
           ) : copied ? (
             <>
-              <Check className="h-3.5 w-3.5 text-emerald-400" />
-              <span className="text-emerald-400">Copied</span>
+              <Check className="h-3.5 w-3.5 text-ok" />
+              <span className="text-ok">Copied</span>
             </>
           ) : (
             <>
@@ -56,7 +56,7 @@ export default function CodeBlock({ code, language = 'text' }: CodeBlockProps) {
         language={language}
         style={oneDark}
         customStyle={{
-          background: '#0a0a0a',
+          background: '#07080d',
           margin: 0,
           padding: '0.75rem 1rem',
           fontSize: '0.8125rem',

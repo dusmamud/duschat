@@ -14,7 +14,7 @@ interface MessageBubbleProps {
   /** First message of a sender group — show avatar + name + time. */
   showHeader: boolean
   searchQuery?: string
-  /** Briefly ring the bubble when jumping to it from search. */
+  /** Briefly step the surface when jumping to it from search. */
   flash?: boolean
   onReply: (m: Message) => void
   onOpenTxt: (m: Message) => void
@@ -78,7 +78,7 @@ function MessageBubble({
         const url = await getSignedFileUrl(message.file_url as string, 3600)
         if (!cancelled) setFileUrl(url)
       } catch {
-        // Stays in the "Loading…" state; retry happens on next mount.
+        // Stays in the "Loading" state; retry happens on next mount.
       }
     })()
     return () => {
@@ -147,37 +147,35 @@ function MessageBubble({
     >
       <div className={`flex max-w-[85%] flex-col sm:max-w-[75%] ${isMine ? 'items-end' : 'items-start'}`}>
         {showHeader && (
-          <span className="mb-1 flex items-center gap-1.5 px-1 text-[11px] text-zinc-500">
+          <span className="mb-1 flex items-center gap-1.5 px-1 font-mono text-[11px] text-ink-3">
             {!isMine && (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-zinc-800 text-[9px] font-semibold text-zinc-300">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-raised text-[9px] font-medium text-ink-2">
                 {initial}
               </span>
             )}
             {senderName} · {time}
-            {message.edited ? ' · (edited)' : ''}
+            {message.edited ? ' · edited' : ''}
           </span>
         )}
 
         <div
           className={`w-fit max-w-full rounded-2xl px-3 py-2 ${
             editing
-              ? isMine
-                ? 'bg-indigo-500/15 ring-1 ring-indigo-500/40'
-                : 'bg-zinc-900'
+              ? 'bg-amber/10 ring-1 ring-amber/40'
               : message.type === 'code' || message.type === 'image'
                 ? 'bg-transparent p-0'
                 : isMine
-                  ? 'rounded-br-md bg-indigo-500/20 text-zinc-100 ring-1 ring-indigo-500/20'
-                  : 'rounded-bl-md bg-zinc-900 text-zinc-100 ring-1 ring-zinc-800/60'
+                  ? 'rounded-br-[4px] bg-raised text-ink ring-1 ring-line'
+                  : 'rounded-bl-[4px] bg-card text-ink ring-1 ring-line'
           }`}
         >
           {message.reply && !editing && (
             <button
               type="button"
               onClick={scrollToReply}
-              className="mb-2 block w-full truncate rounded-lg border-l-2 border-indigo-400/70 bg-black/40 px-2.5 py-1.5 text-left text-xs text-zinc-400 hover:text-zinc-200"
+              className="mb-2 block w-full truncate rounded-lg border-l-2 border-amber/60 bg-deep px-2.5 py-1.5 text-left text-xs text-ink-2 transition-colors hover:text-ink"
             >
-              <span className="font-medium text-zinc-300">{message.reply.sender?.name ?? 'Reply'}</span>
+              <span className="font-medium text-ink">{message.reply.sender?.name ?? 'Reply'}</span>
               <span className="block truncate">
                 {message.reply.content || message.reply.file_name || 'Attachment'}
               </span>
@@ -193,16 +191,16 @@ function MessageBubble({
                 onChange={(e) => setDraft(e.target.value)}
                 aria-label="Edit message"
                 autoFocus
-                className="w-full resize-none rounded-lg border border-zinc-700 bg-black px-3 py-2 text-[15px] text-zinc-100 focus:border-indigo-400 focus:outline-none"
+                className="w-full resize-none rounded-lg border border-line-strong bg-deep px-3 py-2 text-[15px] text-ink focus:border-amber/50 focus:outline-none"
               />
               <div className="mt-2 flex gap-2">
                 <button
                   type="button"
                   onClick={() => void handleSaveEdit()}
                   disabled={saving || !draft.trim()}
-                  className="rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                  className="rounded-lg bg-ink px-3 py-1.5 text-xs font-medium text-page transition-colors hover:bg-white disabled:opacity-50"
                 >
-                  {saving ? 'Saving…' : 'Save'}
+                  {saving ? 'Saving' : 'Save'}
                 </button>
                 <button
                   type="button"
@@ -211,7 +209,7 @@ function MessageBubble({
                     setDraft(message.content)
                   }}
                   disabled={saving}
-                  className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
+                  className="rounded-lg border border-line-strong px-3 py-1.5 text-xs text-ink transition-colors hover:bg-raised disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -221,7 +219,7 @@ function MessageBubble({
             <div className="min-w-[16rem] max-w-full sm:min-w-[22rem]">
               <Suspense
                 fallback={
-                  <div className="h-20 w-full animate-pulse rounded-lg border border-zinc-800 bg-zinc-900" />
+                  <div className="h-20 w-full rounded-xl border border-line bg-card" />
                 }
               >
                 <CodeBlock code={message.content} language="text" />
@@ -239,12 +237,12 @@ function MessageBubble({
                   alt={message.file_name ?? 'Image'}
                   loading="lazy"
                   decoding="async"
-                  className="max-h-72 w-auto max-w-full rounded-xl border border-zinc-800 object-contain"
+                  className="max-h-72 w-auto max-w-full rounded-xl border border-line object-contain"
                 />
               </button>
             ) : (
-              <div className="flex h-32 w-48 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 text-xs text-zinc-500">
-                {message.pending ? 'Uploading image…' : 'Loading image…'}
+              <div className="flex h-32 w-48 items-center justify-center rounded-xl border border-line bg-card text-xs text-ink-3">
+                {message.pending ? 'Uploading image' : 'Loading image'}
               </div>
             )
           ) : message.type === 'file' ? (
@@ -254,14 +252,14 @@ function MessageBubble({
                 onClick={() => onOpenTxt(message)}
                 className="flex w-full items-center gap-3 rounded-xl px-1 py-1 text-left"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-black/50">
-                  <FileText className="h-5 w-5 text-indigo-300" />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-deep">
+                  <FileText className="h-[18px] w-[18px] text-ink-2" />
                 </span>
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium">
                     {highlight(message.file_name ?? 'file.txt', searchQuery)}
                   </span>
-                  <span className="block text-xs text-zinc-400">
+                  <span className="block text-xs text-ink-2">
                     {message.file_size != null ? formatFileSize(message.file_size) : 'Text file'} · Tap to view
                   </span>
                 </span>
@@ -274,22 +272,22 @@ function MessageBubble({
                 rel="noopener noreferrer"
                 className="flex w-full items-center gap-3 rounded-xl px-1 py-1 text-left"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-black/50">
-                  <File className="h-5 w-5 text-zinc-300" />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-deep">
+                  <File className="h-[18px] w-[18px] text-ink-2" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">
                     {highlight(message.file_name ?? 'file', searchQuery)}
                   </span>
-                  <span className="block text-xs text-zinc-400">
+                  <span className="block text-xs text-ink-2">
                     {message.file_size != null ? formatFileSize(message.file_size) : 'File'} · Tap to download
                   </span>
                 </span>
-                <Download className="h-4 w-4 shrink-0 text-zinc-500" />
+                <Download className="h-4 w-4 shrink-0 text-ink-3" />
               </a>
             ) : (
-              <div className="flex items-center gap-3 px-1 py-1 text-xs text-zinc-500">
-                {message.pending ? 'Uploading file…' : 'Loading file…'}
+              <div className="flex items-center gap-3 px-1 py-1 text-xs text-ink-3">
+                {message.pending ? 'Uploading file' : 'Loading file'}
               </div>
             )
           ) : (
@@ -304,16 +302,16 @@ function MessageBubble({
             type="button"
             onClick={() => void handleCopy()}
             aria-label={copied ? 'Copied' : 'Copy message'}
-            className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] text-zinc-500 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
+            className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] text-ink-3 transition-colors hover:bg-raised hover:text-ink"
           >
-            {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+            {copied ? <Check className="h-3.5 w-3.5 text-ok" /> : <Copy className="h-3.5 w-3.5" />}
             {copied ? 'Copied' : 'Copy'}
           </button>
           <button
             type="button"
             onClick={() => onReply(message)}
             aria-label="Reply to message"
-            className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] text-zinc-500 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
+            className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] text-ink-3 transition-colors hover:bg-raised hover:text-ink"
           >
             <Reply className="h-3.5 w-3.5" />
             Reply
@@ -326,7 +324,7 @@ function MessageBubble({
                 setEditing(true)
               }}
               aria-label="Edit message"
-              className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] text-zinc-500 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
+              className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] text-ink-3 transition-colors hover:bg-raised hover:text-ink"
             >
               <Pencil className="h-3.5 w-3.5" />
               Edit
@@ -334,22 +332,22 @@ function MessageBubble({
           )}
           {isMine && !message.pending && (
             confirmingDelete ? (
-              <span className="flex min-h-8 items-center gap-1 rounded-md bg-red-950/60 px-1.5 py-1 text-[11px] text-red-300">
+              <span className="flex min-h-8 items-center gap-1 rounded-md bg-danger-soft px-1.5 py-1 text-[11px] text-danger">
                 Delete?
                 <button
                   type="button"
                   onClick={() => void handleDelete()}
                   disabled={deleting}
-                  className="rounded px-1.5 py-0.5 font-medium text-red-200 hover:bg-red-900 disabled:opacity-50"
+                  className="rounded px-1.5 py-0.5 font-medium text-danger transition-colors hover:bg-danger/20 disabled:opacity-50"
                 >
-                  {deleting ? 'Deleting…' : 'Yes'}
+                  {deleting ? 'Deleting' : 'Yes'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmingDelete(false)}
                   disabled={deleting}
                   aria-label="Cancel delete"
-                  className="rounded p-0.5 hover:bg-red-900 disabled:opacity-50"
+                  className="rounded p-0.5 transition-colors hover:bg-danger/20 disabled:opacity-50"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -359,7 +357,7 @@ function MessageBubble({
                 type="button"
                 onClick={() => setConfirmingDelete(true)}
                 aria-label="Delete message"
-                className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] text-zinc-500 transition-colors hover:bg-red-950/60 hover:text-red-300"
+                className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] text-ink-3 transition-colors hover:bg-danger-soft hover:text-danger"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 Delete

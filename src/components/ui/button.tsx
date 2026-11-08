@@ -17,18 +17,18 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ref={ref}
       type={type}
       className={cn(
-        'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
+        'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
         variant === 'primary' &&
-          'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/25 hover:from-indigo-400 hover:to-violet-400',
+          'bg-ink text-page hover:bg-white',
         variant === 'ghost' &&
-          'bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-white',
+          'bg-transparent text-ink-2 hover:bg-raised hover:text-ink',
         variant === 'outline' &&
-          'border border-zinc-800 bg-transparent text-zinc-100 hover:bg-zinc-900',
+          'border border-line-strong bg-transparent text-ink hover:bg-raised',
         variant === 'destructive' &&
-          'bg-red-600 text-white hover:bg-red-500',
+          'bg-danger text-white hover:bg-danger/90',
         size === 'default' && 'h-11 px-4',
         size === 'sm' && 'h-9 min-h-9 px-3 text-xs',
-        size === 'icon' && 'h-11 w-11 min-h-11 min-w-11 p-0',
+        size === 'icon' && 'h-10 w-10 min-h-10 min-w-10 p-0',
         className,
       )}
       {...props}

@@ -1,54 +1,81 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Dus Chat design tokens — CSS-first Tailwind v4 @theme.
-   Refined black base with an indigo → violet accent matched to the logo. */
-@theme inline {
-  --color-background: #050505;
-  --color-surface: #0a0a0a;
-  --color-surface-2: #101010;
-  --color-surface-3: #171717;
-  --color-border: #262626;
-  --color-foreground: #fafafa;
-  --color-muted: #a1a1aa;
-  --color-accent: #6366f1;
-  --color-accent-2: #8b5cf6;
+/* Dus Chat — ink and lamplight.
+   One neutral ramp tinted toward night ink; one accent, warm amber, used
+   rarely. Quiet chrome; the richness lives in the paired-bubble mark. */
+@theme {
+  --font-sans: "Instrument Sans Variable", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --color-page: #0b0d14;
+  --color-deep: #07080d;
+  --color-card: #11141c;
+  --color-raised: #1a1e28;
+  --color-line: rgba(238, 240, 245, 0.08);
+  --color-line-strong: rgba(238, 240, 245, 0.16);
+  --color-ink: #eef0f5;
+  --color-ink-2: #a3a9b8;
+  --color-ink-3: #7a8296;
+  --color-amber: #e8a33d;
+  --color-amber-deep: #8a5a1d;
+  --color-amber-ink: #1a1408;
+  --color-danger: #e5484d;
+  --color-danger-soft: rgba(229, 72, 77, 0.12);
+  --color-ok: #4cc38a;
+
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --shadow-panel: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
 
 html, body, #root { height: 100%; }
 body {
   margin: 0;
-  background: #050505;
-  color: #fafafa;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
-* { scrollbar-width: thin; scrollbar-color: #262626 transparent; }
+* { scrollbar-width: thin; scrollbar-color: rgba(238, 240, 245, 0.16) transparent; }
 *::-webkit-scrollbar { width: 6px; height: 6px; }
-*::-webkit-scrollbar-thumb { background: #262626; border-radius: 999px; }
+*::-webkit-scrollbar-thumb { background: rgba(238, 240, 245, 0.16); border-radius: 999px; }
 *::-webkit-scrollbar-track { background: transparent; }
-pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+pre, code { font-family: var(--font-mono); }
+
+/* One icon set, one stroke. */
+svg.lucide { stroke-width: 1.5; }
+
+/* Visible keyboard focus everywhere: one amber ring. */
+:focus-visible { outline: 2px solid var(--color-amber); outline-offset: 2px; }
 
 /* Search highlight inside messages and file names. */
 mark {
-  background: rgba(99, 102, 241, 0.45);
-  color: #fafafa;
+  background: rgba(232, 163, 61, 0.28);
+  color: var(--color-ink);
   border-radius: 2px;
   padding: 0 1px;
 }
 
-/* Brief ring flash when jumping to a searched message. */
-@keyframes flash-ring {
-  0% { box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.9); border-radius: 1rem; }
-  100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); border-radius: 1rem; }
+/* Quiet surface step when jumping to a searched message — no ring, no glow. */
+@keyframes flash-surface {
+  0% { background-color: rgba(232, 163, 61, 0.14); }
+  100% { background-color: transparent; }
 }
-.flash-message { animation: flash-ring 2s ease-out; }
+.flash-message { animation: flash-surface 2s ease-out; }
 
-/* Typing indicator dots. */
+/* Typing indicator dots — live, so a small bounce is fine. */
 @keyframes typing-bounce {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-  30% { transform: translateY(-4px); opacity: 1; }
+  30% { transform: translateY(-3px); opacity: 1; }
 }
 .typing-dot { animation: typing-bounce 1.2s infinite ease-in-out; }
 .typing-dot:nth-child(2) { animation-delay: 0.15s; }
 .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+/* Indeterminate upload bar — a solid amber bar sliding across the track. */
+@keyframes upload-slide {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(260%); }
+}
+.upload-bar { animation: upload-slide 1.4s var(--ease-smooth) infinite; }
