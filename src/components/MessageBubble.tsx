@@ -308,6 +308,12 @@ function MessageBubble({
               {highlight(message.content, searchQuery)}
             </p>
           )}
+          {/* Caption typed with a file/image — shows under the media. */}
+          {(message.type === 'image' || message.type === 'file') && message.content ? (
+            <p className="mt-2 px-1 text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+              {highlight(message.content, searchQuery)}
+            </p>
+          ) : null}
         </div>
 
         {/* Actions stay visible on touch screens, and reveal on hover / keyboard focus on desktop — otherwise every message carries a row of buttons. */}

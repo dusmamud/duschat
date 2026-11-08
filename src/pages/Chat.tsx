@@ -171,14 +171,13 @@ export default function Chat() {
     [],
   )
 
-  // ONE upload helper for images and files alike, so `uploading` is set
-  // exactly once. Shows the pending file message immediately, then swaps it
-  // for the real row once the upload + insert succeed.
-  const handleUpload = async (file: File) => {
+  // Send a staged file: the typed text goes with it as its caption.
+  // Nothing uploads before this runs — picking a file only stages it.
+  const handleSendFile = async (text: string, file: File) => {
     const kind: 'image' | 'file' = isImageFile(file.type) ? 'image' : 'file'
     setUploadError(null)
     setUploading({ fileName: file.name })
-    const tempId = queueFileMessage(file, kind)
+    const tempId = queueFileMessage(file, kind, text)
     try {
       let uploaded: { path: string; fileName: string; fileSize: number }
       if (kind === 'image') {
@@ -194,6 +193,7 @@ export default function Chat() {
         path: uploaded.path,
         fileName: uploaded.fileName,
         fileSize: uploaded.fileSize,
+        caption: text,
       })
       lastFailedFileRef.current = null
     } catch (err) {
@@ -209,7 +209,7 @@ export default function Chat() {
     const file = lastFailedFileRef.current
     if (!file) return
     setUploadError(null)
-    void handleUpload(file)
+    void handleSendFile('', file)
   }
 
   // Delete-all: the SECURITY DEFINER RPC deletes every message row (both
@@ -457,8 +457,7 @@ export default function Chat() {
           <MessageInput
             onSendText={(text) => void sendText(text)}
             onSendCode={(code) => void sendCode(code)}
-            onPickImage={(file) => void handleUpload(file)}
-            onPickFile={(file) => void handleUpload(file)}
+            onSendFile={(text, file) => void handleSendFile(text, file)}
             onTyping={notifyTyping}
             replyTarget={replyTarget}
             onCancelReply={() => setReplyTarget(null)}
