@@ -1,21 +1,54 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Dus Chat design tokens — CSS-first Tailwind v4 @theme.
+   Refined black base with an indigo → violet accent matched to the logo. */
 @theme inline {
-  --color-background: #000000;
+  --color-background: #050505;
   --color-surface: #0a0a0a;
-  --color-surface-2: #141414;
-  --color-surface-3: #1c1c1c;
+  --color-surface-2: #101010;
+  --color-surface-3: #171717;
   --color-border: #262626;
   --color-foreground: #fafafa;
   --color-muted: #a1a1aa;
-  --color-accent: #ffffff;
+  --color-accent: #6366f1;
+  --color-accent-2: #8b5cf6;
 }
 
 html, body, #root { height: 100%; }
-body { margin: 0; background: #000; color: #fafafa; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+body {
+  margin: 0;
+  background: #050505;
+  color: #fafafa;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
 * { scrollbar-width: thin; scrollbar-color: #262626 transparent; }
 *::-webkit-scrollbar { width: 6px; height: 6px; }
 *::-webkit-scrollbar-thumb { background: #262626; border-radius: 999px; }
 *::-webkit-scrollbar-track { background: transparent; }
 pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* Search highlight inside messages and file names. */
+mark {
+  background: rgba(99, 102, 241, 0.45);
+  color: #fafafa;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* Brief ring flash when jumping to a searched message. */
+@keyframes flash-ring {
+  0% { box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.9); border-radius: 1rem; }
+  100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); border-radius: 1rem; }
+}
+.flash-message { animation: flash-ring 2s ease-out; }
+
+/* Typing indicator dots. */
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+.typing-dot { animation: typing-bounce 1.2s infinite ease-in-out; }
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.3s; }

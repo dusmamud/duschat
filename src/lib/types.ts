@@ -18,6 +18,8 @@ export interface Message {
   file_size: number | null
   reply_to: string | null
   created_at: string
+  updated_at: string
+  edited: boolean
   sender?: Profile
   reply?: Message | null
   pending?: boolean

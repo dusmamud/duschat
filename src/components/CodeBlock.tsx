@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { Check, Copy } from 'lucide-react'
+import { copyTextToClipboard } from '@/lib/clipboard'
 
 interface CodeBlockProps {
   code: string
@@ -10,14 +11,17 @@ interface CodeBlockProps {
 
 export default function CodeBlock({ code, language = 'text' }: CodeBlockProps) {
   const [copied, setCopied] = useState(false)
+  const [copyFailed, setCopyFailed] = useState(false)
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(code)
+      await copyTextToClipboard(code)
       setCopied(true)
+      setCopyFailed(false)
       window.setTimeout(() => setCopied(false), 1500)
     } catch {
-      // Clipboard API unavailable (e.g. insecure context) — fail silently.
+      setCopyFailed(true)
+      window.setTimeout(() => setCopyFailed(false), 2500)
     }
   }
 
@@ -29,11 +33,13 @@ export default function CodeBlock({ code, language = 'text' }: CodeBlockProps) {
         </span>
         <button
           type="button"
-          onClick={handleCopy}
+          onClick={() => void handleCopy()}
           aria-label={copied ? 'Copied' : 'Copy code'}
           className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
         >
-          {copied ? (
+          {copyFailed ? (
+            <span className="text-red-400">Copy failed</span>
+          ) : copied ? (
             <>
               <Check className="h-3.5 w-3.5 text-emerald-400" />
               <span className="text-emerald-400">Copied</span>

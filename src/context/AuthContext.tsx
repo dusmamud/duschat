@@ -20,6 +20,8 @@ export interface SignUpInput {
 
 export interface AuthContextValue {
   user: Profile | null
+  /** The other person in this 2-user chat (null until they sign up). */
+  other: Profile | null
   sessionUserId: string | null
   loading: boolean
   signIn: (username: string, password: string) => Promise<void>
@@ -42,14 +44,16 @@ function friendlyAuthError(message: string): string {
   return message || 'Something went wrong. Please try again.'
 }
 
-async function fetchProfile(userId: string): Promise<Profile | null> {
+// Single source of truth for profiles: fetched ONCE per session (both
+// rows — there are at most 2 users), then shared via context. Nothing else
+// in the app queries the profiles table per message or per render.
+async function fetchProfiles(): Promise<Profile[]> {
   const { data, error } = await supabase
     .from('profiles')
     .select('id, username, name, email, created_at')
-    .eq('id', userId)
-    .maybeSingle()
-  if (error) return null
-  return (data as Profile | null) ?? null
+    .order('created_at', { ascending: true })
+  if (error) return []
+  return (data as Profile[] | null) ?? []
 }
 
 /** Resolve an email for a username. The DB function takes `p_username`. */
@@ -64,40 +68,36 @@ async function getEmailByUsername(username: string): Promise<string> {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Profile | null>(null)
+  const [other, setOther] = useState<Profile | null>(null)
   const [sessionUserId, setSessionUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const mountedRef = useRef(true)
 
   useEffect(() => {
     mountedRef.current = true
-    let subscription: { unsubscribe: () => void } | null = null
 
-    const loadSession = async () => {
-      try {
-        const { data } = await supabase.auth.getSession()
-        const sessionUser = data.session?.user ?? null
-        if (!mountedRef.current) return
-        setSessionUserId(sessionUser?.id ?? null)
-        setUser(sessionUser ? await fetchProfile(sessionUser.id) : null)
-      } finally {
-        if (mountedRef.current) setLoading(false)
-      }
-    }
-
-    loadSession()
-
+    // The listener alone loads the session: onAuthStateChange fires
+    // INITIAL_SESSION on subscribe, so a separate loadSession() call here
+    // would fetch the profile twice for every page load.
     const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const sessionUser = session?.user ?? null
       if (!mountedRef.current) return
       setSessionUserId(sessionUser?.id ?? null)
-      setUser(sessionUser ? await fetchProfile(sessionUser.id) : null)
+      if (sessionUser) {
+        const profiles = await fetchProfiles()
+        if (!mountedRef.current) return
+        setUser(profiles.find((p) => p.id === sessionUser.id) ?? null)
+        setOther(profiles.find((p) => p.id !== sessionUser.id) ?? null)
+      } else {
+        setUser(null)
+        setOther(null)
+      }
       setLoading(false)
     })
-    subscription = data.subscription
 
     return () => {
       mountedRef.current = false
-      subscription?.unsubscribe()
+      data.subscription.unsubscribe()
     }
   }, [])
 
@@ -109,9 +109,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw new Error(friendlyAuthError(error.message))
     if (data.user) {
-      const profile = await fetchProfile(data.user.id)
+      const profiles = await fetchProfiles()
       setSessionUserId(data.user.id)
-      setUser(profile)
+      setUser(profiles.find((p) => p.id === data.user.id) ?? null)
+      setOther(profiles.find((p) => p.id !== data.user.id) ?? null)
     }
   }, [])
 
@@ -175,12 +176,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     await supabase.auth.signOut()
     setUser(null)
+    setOther(null)
     setSessionUserId(null)
   }, [])
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, sessionUserId, loading, signIn, signUp, signOut }),
-    [user, sessionUserId, loading, signIn, signUp, signOut],
+    () => ({ user, other, sessionUserId, loading, signIn, signUp, signOut }),
+    [user, other, sessionUserId, loading, signIn, signUp, signOut],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

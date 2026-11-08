@@ -9,6 +9,27 @@ const BUCKET = 'chat-files'
 const MAX_TXT_BYTES = 2 * 1024 * 1024 // 2 MB
 const MAX_FILE_BYTES = 10 * 1024 * 1024 // 10 MB (bucket limit)
 
+/** MIME types that must never be uploaded — they could render as active
+ *  content (HTML/JS/SVG) if a signed URL were ever opened in a browser. */
+const DANGEROUS_TYPES = new Set([
+  'text/html',
+  'image/svg+xml',
+  'application/xhtml+xml',
+  'text/javascript',
+])
+
+function assertSafeType(fileType: string): void {
+  if (DANGEROUS_TYPES.has(fileType.toLowerCase())) {
+    throw new Error('That file type is not allowed.')
+  }
+}
+
+/** Keep only a safe extension: `.` + 1–10 alphanumerics, or nothing. */
+function sanitizeExtension(fileName: string): string {
+  const match = /\.([A-Za-z0-9]{1,10})$/.exec(fileName)
+  return match ? `.${match[1]}` : ''
+}
+
 export function formatFileSize(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes < 0) return '0 B'
   if (bytes < 1024) return `${bytes} B`
@@ -24,7 +45,6 @@ export function formatFileSize(bytes: number): string {
 
 export interface UploadedImage {
   path: string
-  publicUrl?: string
 }
 
 export interface UploadedFile {
@@ -47,18 +67,26 @@ export function isImageFile(fileType: string): boolean {
 
 /**
  * Upload any file as-is (max 10 MB, the bucket limit) to
- * `chat-files/<userId>/<uuid>.<ext>`. The original extension is kept so the
- * receiver sees the real file name. Only `.txt` files get the popup viewer;
- * every other file is a download attachment.
+ * `chat-files/<userId>/<uuid>.<ext>`. The original extension is kept (sanitised
+ * to safe characters) so the receiver sees the real file name. Only `.txt`
+ * files get the popup viewer; every other file is a download attachment.
+ * Non-image/non-txt files are stored as `application/octet-stream` so a
+ * signed URL downloads instead of rendering in the browser.
  */
 export async function uploadFile(file: File, userId: string): Promise<UploadedFile> {
+  assertSafeType(file.type)
   if (file.size > MAX_FILE_BYTES) {
     throw new Error('File must be 10 MB or smaller.')
   }
-  const ext = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')) : ''
+  const ext = sanitizeExtension(file.name)
   const path = `${userId}/${crypto.randomUUID()}${ext}`
+  const contentType = isImageFile(file.type)
+    ? file.type
+    : isTxtFile(file.name, file.type)
+      ? 'text/plain'
+      : 'application/octet-stream'
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-    contentType: file.type || 'application/octet-stream',
+    contentType,
   })
   if (error) throw new Error(error.message)
   return { path, fileName: file.name, fileSize: file.size }
@@ -66,9 +94,11 @@ export async function uploadFile(file: File, userId: string): Promise<UploadedFi
 
 /**
  * Compress an image client-side (max 0.8 MB / 1600 px) and upload it as JPEG
- * to `chat-files/<userId>/<uuid>.jpg`.
+ * to `chat-files/<userId>/<uuid>.jpg`. The bucket is private, so only the
+ * storage path is returned — callers resolve a signed URL to view it.
  */
 export async function uploadImage(file: File, userId: string): Promise<UploadedImage> {
+  assertSafeType(file.type)
   if (!file.type.startsWith('image/')) {
     throw new Error('Please choose an image file.')
   }
@@ -82,8 +112,7 @@ export async function uploadImage(file: File, userId: string): Promise<UploadedI
     contentType: 'image/jpeg',
   })
   if (error) throw new Error(error.message)
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
-  return { path, publicUrl: data.publicUrl }
+  return { path }
 }
 
 /**
@@ -91,6 +120,7 @@ export async function uploadImage(file: File, userId: string): Promise<UploadedI
  * `chat-files/<userId>/<uuid>.txt`.
  */
 export async function uploadTxt(file: File, userId: string): Promise<UploadedTxt> {
+  assertSafeType(file.type)
   const isTxt =
     file.name.toLowerCase().endsWith('.txt') || file.type === 'text/plain'
   if (!isTxt) {
@@ -105,4 +135,10 @@ export async function uploadTxt(file: File, userId: string): Promise<UploadedTxt
   })
   if (error) throw new Error(error.message)
   return { path, fileName: file.name, fileSize: file.size }
+}
+
+/** Remove one object from the bucket (best effort — ignores missing files). */
+export async function deleteStorageFile(path: string): Promise<void> {
+  const { error } = await supabase.storage.from(BUCKET).remove([path])
+  if (error) throw new Error(error.message)
 }

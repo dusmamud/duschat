@@ -7,6 +7,7 @@ interface SettingsMenuProps {
   onClose: () => void
 }
 
+/** Settings: bottom sheet on mobile, dropdown panel on desktop. */
 export default function SettingsMenu({ onDeleteAll, onLogout, onClose }: SettingsMenuProps) {
   const [confirming, setConfirming] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -33,28 +34,28 @@ export default function SettingsMenu({ onDeleteAll, onLogout, onClose }: Setting
   }
 
   return (
-    <div className="fixed inset-0 z-50" role="menu" aria-label="Settings">
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-start sm:justify-end sm:p-4" role="dialog" aria-modal="true" aria-label="Settings">
       {/* Click-away layer */}
       <button
         type="button"
         aria-label="Close settings"
-        className="absolute inset-0 cursor-default bg-transparent"
+        className="absolute inset-0 cursor-default bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="absolute top-14 right-3 w-72 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 shadow-2xl sm:right-4">
+      <div className="relative w-full overflow-hidden rounded-t-2xl border border-zinc-800 bg-zinc-950 shadow-2xl sm:w-72 sm:rounded-xl">
         <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
           <p className="text-sm font-medium text-zinc-100">Settings</p>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close settings"
-            className="rounded-md p-1 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+            className="flex h-9 w-9 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="p-2">
+        <div className="p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           {confirming ? (
             <div className="px-2 py-2">
               <div className="flex items-start gap-2">
@@ -67,9 +68,9 @@ export default function SettingsMenu({ onDeleteAll, onLogout, onClose }: Setting
               <div className="mt-3 flex gap-2">
                 <button
                   type="button"
-                  onClick={handleConfirmDelete}
+                  onClick={() => void handleConfirmDelete()}
                   disabled={deleting}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500 disabled:opacity-60"
+                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500 disabled:opacity-60"
                 >
                   {deleting ? (
                     <>
@@ -90,7 +91,7 @@ export default function SettingsMenu({ onDeleteAll, onLogout, onClose }: Setting
                     setError(null)
                   }}
                   disabled={deleting}
-                  className="flex-1 rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-200 transition-colors hover:bg-zinc-800 disabled:opacity-60"
+                  className="h-11 flex-1 rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-200 transition-colors hover:bg-zinc-800 disabled:opacity-60"
                 >
                   Cancel
                 </button>
@@ -101,7 +102,7 @@ export default function SettingsMenu({ onDeleteAll, onLogout, onClose }: Setting
               <button
                 type="button"
                 onClick={() => setConfirming(true)}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-red-400 transition-colors hover:bg-red-950/50"
+                className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-red-400 transition-colors hover:bg-red-950/50"
               >
                 <Trash2 className="h-4 w-4 shrink-0" />
                 <span>
@@ -117,7 +118,7 @@ export default function SettingsMenu({ onDeleteAll, onLogout, onClose }: Setting
                   onLogout()
                   onClose()
                 }}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-zinc-200 transition-colors hover:bg-zinc-800"
+                className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-zinc-200 transition-colors hover:bg-zinc-800"
               >
                 <LogOut className="h-4 w-4 shrink-0 text-zinc-400" />
                 Log out

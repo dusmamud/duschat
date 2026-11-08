@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Check, Copy, Download, FileText, Loader2, X } from 'lucide-react'
 import type { Message } from '@/lib/types'
 import { formatFileSize, supabase } from '@/lib/files'
+import { copyTextToClipboard } from '@/lib/clipboard'
 
 /** Max .txt content shown in the viewer (200 KB). */
 const MAX_BYTES = 200 * 1024
@@ -9,9 +10,10 @@ const MAX_BYTES = 200 * 1024
 interface TxtViewerProps {
   message: Message | null
   onClose: () => void
+  onCopyError: (msg: string) => void
 }
 
-export default function TxtViewer({ message, onClose }: TxtViewerProps) {
+export default function TxtViewer({ message, onClose, onCopyError }: TxtViewerProps) {
   const [text, setText] = useState<string | null>(null)
   const [truncated, setTruncated] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -29,20 +31,15 @@ export default function TxtViewer({ message, onClose }: TxtViewerProps) {
       setTruncated(false)
       setCopied(false)
       try {
-        let raw: string
+        // file_url is a storage path ONLY — always download from the private
+        // bucket. Never fetch() an arbitrary URL from a message row.
         const url = message.file_url
         if (!url) throw new Error('No file attached to this message.')
-        if (url.startsWith('http')) {
-          const res = await fetch(url)
-          if (!res.ok) throw new Error(`Could not load file (HTTP ${res.status}).`)
-          raw = await res.text()
-        } else {
-          const { data, error: dlError } = await supabase.storage
-            .from('chat-files')
-            .download(url)
-          if (dlError || !data) throw new Error(dlError?.message ?? 'Could not download file.')
-          raw = await data.text()
-        }
+        const { data, error: dlError } = await supabase.storage
+          .from('chat-files')
+          .download(url)
+        if (dlError || !data) throw new Error(dlError?.message ?? 'Could not download file.')
+        const raw = await data.text()
         if (cancelled) return
         const bytes = new TextEncoder().encode(raw)
         if (bytes.length > MAX_BYTES) {
@@ -82,11 +79,11 @@ export default function TxtViewer({ message, onClose }: TxtViewerProps) {
   const handleCopy = async () => {
     if (!text) return
     try {
-      await navigator.clipboard.writeText(text)
+      await copyTextToClipboard(text)
       setCopied(true)
       window.setTimeout(() => setCopied(false), 1500)
     } catch {
-      // Clipboard API unavailable — fail silently.
+      onCopyError('Could not copy — please copy manually.')
     }
   }
 
@@ -103,18 +100,18 @@ export default function TxtViewer({ message, onClose }: TxtViewerProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center sm:p-6"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={fileName}
     >
       <div
-        className="flex max-h-[85dvh] w-[92vw] max-w-2xl flex-col overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 shadow-2xl"
+        className="flex max-h-[85dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-zinc-800 bg-zinc-950 shadow-2xl sm:w-[92vw] sm:max-w-2xl sm:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 border-b border-zinc-800 px-4 py-3">
-          <FileText className="h-5 w-5 shrink-0 text-zinc-400" />
+          <FileText className="h-5 w-5 shrink-0 text-indigo-300" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-zinc-100">{fileName}</p>
             {message.file_size != null && (
@@ -123,9 +120,9 @@ export default function TxtViewer({ message, onClose }: TxtViewerProps) {
           </div>
           <button
             type="button"
-            onClick={handleCopy}
+            onClick={() => void handleCopy()}
             disabled={!text}
-            className="flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-800 disabled:opacity-40"
+            className="flex h-11 shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-800 disabled:opacity-40"
           >
             {copied ? (
               <>
@@ -143,7 +140,7 @@ export default function TxtViewer({ message, onClose }: TxtViewerProps) {
             type="button"
             onClick={handleDownload}
             disabled={!text}
-            className="flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-800 disabled:opacity-40"
+            className="flex h-11 shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-800 disabled:opacity-40"
           >
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline">Download</span>
@@ -152,7 +149,7 @@ export default function TxtViewer({ message, onClose }: TxtViewerProps) {
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="shrink-0 rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
           >
             <X className="h-5 w-5" />
           </button>

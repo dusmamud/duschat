@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AlertCircle, Eye, EyeOff, Loader2, MessageSquare } from 'lucide-react'
+import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -63,9 +63,11 @@ export default function Signup({ onSwitchToLogin, onDone }: SignupProps) {
       <div className="w-full max-w-sm">
         <div className="rounded-2xl border border-zinc-800 bg-[#0a0a0a] p-6 shadow-2xl sm:p-8">
           <div className="mb-6 flex flex-col items-center text-center">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-black">
-              <MessageSquare className="h-6 w-6" aria-hidden />
-            </div>
+            <img
+              src="/logo.png"
+              alt="Dus Chat logo"
+              className="mb-4 h-14 w-14 rounded-2xl shadow-[0_0_28px_rgba(99,102,241,0.45)]"
+            />
             <h1 className="text-2xl font-semibold tracking-tight text-white">Create your account</h1>
             <p className="mt-1 text-sm text-zinc-400">Only 2 accounts can ever register on Dus Chat.</p>
           </div>
