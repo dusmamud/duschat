@@ -304,7 +304,7 @@ export default function ImageEditor({ source, fileName, fileType, onSave, onClos
         : 'png'
 
   return (
-    <div className="fixed inset-0 z-[70] h-dvh w-full bg-deep" role="dialog" aria-modal="true" aria-label="Edit image">
+    <div className="dus-image-editor fixed inset-0 z-[70] h-dvh w-full bg-deep" role="dialog" aria-modal="true" aria-label="Edit image">
       <FilerobotImageEditor
         source={source}
         theme={DUS_THEME}

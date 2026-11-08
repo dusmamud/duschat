@@ -131,3 +131,23 @@ mark {
   .typing-dot { animation: none; }
   .upload-bar { animation: none; }
 }
+
+/* Image editor number inputs — Finetune value boxes, the Text font-size
+   box, Resize width/height. They are @scaleflex/ui Input, and the
+   library hardcodes its colors to the light palette (input.utils.js
+   reads lightPalette directly, never theme.palette), so no theme token
+   can fix them: the box stayed white with pale text on the dark editor.
+   Restyled here, scoped to the editor root so nothing else is touched.
+   The two-class selector beats the library's single generated class
+   regardless of style-injection order. */
+.dus-image-editor .SfxInput-root {
+  background-color: #11141c;
+  color: #eef0f5;
+  border-color: #1a1e28;
+}
+.dus-image-editor .SfxInput-root:hover {
+  border-color: #2a2f3d;
+}
+.dus-image-editor .SfxInput-root:focus-within {
+  border-color: #e8a33d;
+}
