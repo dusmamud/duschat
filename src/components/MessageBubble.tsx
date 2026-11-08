@@ -143,7 +143,7 @@ function MessageBubble({
   return (
     <div
       id={`msg-${message.id}`}
-      className={`flex flex-col ${isMine ? 'items-end' : 'items-start'} ${message.pending ? 'opacity-70' : ''} ${flash ? 'flash-message' : ''}`}
+      className={`group flex flex-col ${isMine ? 'items-end' : 'items-start'} ${message.pending ? 'opacity-70' : ''} ${flash ? 'flash-message' : ''}`}
     >
       <div className={`flex max-w-[85%] flex-col sm:max-w-[75%] ${isMine ? 'items-end' : 'items-start'}`}>
         {showHeader && (
@@ -175,7 +175,11 @@ function MessageBubble({
               onClick={scrollToReply}
               className="mb-2 block w-full truncate rounded-lg border-l-2 border-amber/60 bg-deep px-2.5 py-1.5 text-left text-xs text-ink-2 transition-colors hover:text-ink"
             >
-              <span className="font-medium text-ink">{message.reply.sender?.name ?? 'Reply'}</span>
+              <span className="font-medium text-ink">
+                {message.reply.sender_id === message.sender_id
+                  ? 'You'
+                  : (message.reply.sender?.name ?? message.reply.sender?.username ?? 'Reply')}
+              </span>
               <span className="block truncate">
                 {message.reply.content || message.reply.file_name || 'Attachment'}
               </span>
@@ -189,6 +193,15 @@ function MessageBubble({
                 rows={3}
                 maxLength={20000}
                 onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    void handleSaveEdit()
+                  } else if (e.key === 'Escape') {
+                    setEditing(false)
+                    setDraft(message.content)
+                  }
+                }}
                 aria-label="Edit message"
                 autoFocus
                 className="w-full resize-none rounded-lg border border-line-strong bg-deep px-3 py-2 text-[15px] text-ink focus:border-amber/50 focus:outline-none"
@@ -216,7 +229,7 @@ function MessageBubble({
               </div>
             </div>
           ) : message.type === 'code' ? (
-            <div className="min-w-[16rem] max-w-full sm:min-w-[22rem]">
+            <div className="min-w-0 max-w-full sm:min-w-[16rem] sm:max-w-full">
               <Suspense
                 fallback={
                   <div className="h-20 w-full rounded-xl border border-line bg-card" />
@@ -297,7 +310,8 @@ function MessageBubble({
           )}
         </div>
 
-        <div className="mt-1 flex flex-wrap items-center gap-1 px-1">
+        {/* Actions stay visible on touch screens, and reveal on hover / keyboard focus on desktop — otherwise every message carries a row of buttons. */}
+        <div className="mt-1 flex flex-wrap items-center gap-1 px-1 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-focus-within:opacity-100 [@media(hover:hover)]:group-hover:opacity-100">
           <button
             type="button"
             onClick={() => void handleCopy()}

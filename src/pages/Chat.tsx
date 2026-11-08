@@ -251,6 +251,12 @@ export default function Chat() {
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setSearchQuery('')
+                    setSearchOpen(false)
+                  }
+                }}
                 placeholder="Search messages"
                 aria-label="Search messages"
                 className="min-w-0 flex-1 bg-transparent py-2.5 text-sm text-ink placeholder:text-ink-3 focus:outline-none"
@@ -279,7 +285,7 @@ export default function Chat() {
       {!isOnline && (
         <div className="flex items-center justify-center gap-2 border-b border-amber/25 bg-amber/10 px-4 py-2 text-xs text-amber">
           <WifiOff className="h-3.5 w-3.5 shrink-0" />
-          You&apos;re offline — messages will send when reconnected
+          You&apos;re offline — messages can&apos;t send right now
         </div>
       )}
       {isOnline && !channelConnected && !loading && (
@@ -456,7 +462,7 @@ export default function Chat() {
             onTyping={notifyTyping}
             replyTarget={replyTarget}
             onCancelReply={() => setReplyTarget(null)}
-            disabled={uploading !== null}
+            attachDisabled={uploading !== null}
           />
         </div>
       </div>

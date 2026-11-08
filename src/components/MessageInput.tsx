@@ -11,6 +11,8 @@ interface MessageInputProps {
   replyTarget: ReplyTarget | null
   onCancelReply: () => void
   disabled?: boolean
+  /** Upload in progress — only the attach buttons lock; typing stays on. */
+  attachDisabled?: boolean
 }
 
 const MAX_MESSAGE_LENGTH = 20000
@@ -24,6 +26,7 @@ export default function MessageInput({
   replyTarget,
   onCancelReply,
   disabled,
+  attachDisabled,
 }: MessageInputProps) {
   const [value, setValue] = useState('')
   const [codeMode, setCodeMode] = useState(false)
@@ -94,7 +97,7 @@ export default function MessageInput({
           <button
             type="button"
             onClick={() => imageInputRef.current?.click()}
-            disabled={disabled}
+            disabled={attachDisabled}
             aria-label="Send image"
             className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink disabled:opacity-40"
           >
@@ -103,7 +106,7 @@ export default function MessageInput({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            disabled={disabled}
+            disabled={attachDisabled}
             aria-label="Attach any file"
             className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink disabled:opacity-40"
           >
