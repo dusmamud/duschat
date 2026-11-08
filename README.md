@@ -1,5 +1,8 @@
 # Dus Chat
 
+[![Deploy to Cloudflare Pages](https://github.com/dusmamud/duschat/actions/workflows/deploy.yml/badge.svg)](https://github.com/dusmamud/duschat/actions/workflows/deploy.yml)
+
+
 A private, two-person chat web app. Black theme, realtime messages, and no custom backend — Supabase handles auth, database, realtime, and file storage.
 
 ## Stack
