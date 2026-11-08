@@ -1,7 +1,11 @@
-import { useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent, type RefObject } from 'react'
-import { ClipboardPaste, Code2, FileText, ImagePlus, Paperclip, Send, X } from 'lucide-react'
+import { lazy, Suspense, useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent, type RefObject } from 'react'
+import { ClipboardPaste, Code2, FileText, ImagePlus, Loader2, Paperclip, Pencil, Send, X } from 'lucide-react'
 import { formatFileSize, isImageFile } from '@/lib/files'
 import type { ReplyTarget } from '@/lib/types'
+
+// The editor (Filerobot + Konva) is heavy — it loads only when the user
+// opens it, never in the initial bundle.
+const ImageEditor = lazy(() => import('./ImageEditor'))
 
 interface MessageInputProps {
   onSendText: (text: string) => void
@@ -30,6 +34,7 @@ export default function MessageInput({
   const [codeMode, setCodeMode] = useState(false)
   const [stagedFile, setStagedFile] = useState<File | null>(null)
   const [stagedPreview, setStagedPreview] = useState<string | null>(null)
+  const [editorOpen, setEditorOpen] = useState(false)
   const [pasteError, setPasteError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const imageInputRef = useRef<HTMLInputElement | null>(null)
@@ -69,6 +74,12 @@ export default function MessageInput({
     if (stagedPreview) URL.revokeObjectURL(stagedPreview)
     setStagedPreview(null)
     setStagedFile(null)
+  }
+
+  /** Edited image from the editor replaces the staged file. */
+  const handleEditorSave = (file: File) => {
+    stageFile(file)
+    setEditorOpen(false)
   }
 
   const send = () => {
@@ -165,7 +176,17 @@ export default function MessageInput({
       {stagedFile && (
         <div className="mb-2 flex items-center gap-2 rounded-lg border border-line bg-card px-2.5 py-2">
           {stagedPreview ? (
-            <img src={stagedPreview} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover" />
+            <button
+              type="button"
+              onClick={() => setEditorOpen(true)}
+              aria-label="Edit image"
+              className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md"
+            >
+              <img src={stagedPreview} alt="" className="h-full w-full object-cover" />
+              <span className="absolute inset-0 flex items-center justify-center bg-deep/40 opacity-0 transition-opacity hover:opacity-100">
+                <Pencil className="h-4 w-4 text-white" />
+              </span>
+            </button>
           ) : (
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-deep">
               <FileText className="h-[18px] w-[18px] text-ink-2" />
@@ -174,7 +195,8 @@ export default function MessageInput({
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-medium text-ink">{stagedFile.name}</p>
             <p className="text-[11px] text-ink-3">
-              {formatFileSize(stagedFile.size)} · Sends when you press send
+              {formatFileSize(stagedFile.size)}
+              {stagedPreview ? ' · Tap the image to edit' : ' · Sends when you press send'}
             </p>
           </div>
           <button
@@ -279,6 +301,25 @@ export default function MessageInput({
           </button>
         </div>
       </div>
+
+      {editorOpen && stagedFile && stagedPreview && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-deep">
+              <Loader2 className="h-6 w-6 animate-spin text-ink-3" />
+            </div>
+          }
+        >
+          <ImageEditor
+            key={stagedPreview}
+            source={stagedPreview}
+            fileName={stagedFile.name}
+            fileType={stagedFile.type}
+            onSave={handleEditorSave}
+            onClose={() => setEditorOpen(false)}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }
