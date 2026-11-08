@@ -31,10 +31,10 @@ export interface UseMessagesResult {
   sendCode: (code: string, replyToId?: string) => Promise<void>
   editMessage: (id: string, content: string) => Promise<void>
   deleteMessage: (message: Message) => Promise<void>
-  queueFileMessage: (file: File, type: 'image' | 'file') => string
+  queueFileMessage: (file: File, type: 'image' | 'file', caption?: string) => string
   confirmFileMessage: (
     tempId: string,
-    data: { type: 'image' | 'file'; path: string; fileName: string; fileSize: number },
+    data: { type: 'image' | 'file'; path: string; fileName: string; fileSize: number; caption?: string },
   ) => Promise<void>
   cancelPendingFile: (tempId: string) => void
   notifyTyping: () => void
@@ -506,7 +506,7 @@ export function useMessages(): UseMessagesResult {
   }, [])
 
   /** Show a pending file message immediately, before the upload finishes. */
-  const queueFileMessage = useCallback((file: File, type: 'image' | 'file') => {
+  const queueFileMessage = useCallback((file: File, type: 'image' | 'file', caption = '') => {
     const senderId = sessionUserId ?? userRef.current?.id
     const tempId = crypto.randomUUID()
     if (!senderId) return tempId
@@ -517,7 +517,7 @@ export function useMessages(): UseMessagesResult {
       id: tempId,
       sender_id: senderId,
       type,
-      content: '',
+      content: caption,
       file_url: null,
       file_name: file.name,
       file_size: file.size,
@@ -537,7 +537,7 @@ export function useMessages(): UseMessagesResult {
   const confirmFileMessage = useCallback(
     async (
       tempId: string,
-      data: { type: 'image' | 'file'; path: string; fileName: string; fileSize: number },
+      data: { type: 'image' | 'file'; path: string; fileName: string; fileSize: number; caption?: string },
     ) => {
       const senderId = sessionUserId ?? userRef.current?.id
       if (!senderId) throw new Error('Not signed in')
@@ -548,7 +548,7 @@ export function useMessages(): UseMessagesResult {
         .insert({
           sender_id: senderId,
           type: data.type,
-          content: '',
+          content: data.caption ?? '',
           file_url: data.path,
           file_name: data.fileName,
           file_size: data.fileSize,
