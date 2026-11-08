@@ -152,13 +152,24 @@ export default function Chat() {
   // Warm up the overlay chunks once the chat is open, so the lightbox,
   // .txt viewer and settings open instantly on first tap instead of
   // downloading their chunk mid-tap. Tiny chunks (~4 kB each); one shot.
+  // The image editor chunk (~270 kB gzip) warms up a few seconds later,
+  // once the chat itself is settled — ready long before the user ever
+  // picks an image, instead of starting to download on tap. One download
+  // per session; the browser caches it after that, and it costs no
+  // Supabase calls at all.
   useEffect(() => {
-    const t = window.setTimeout(() => {
+    const t1 = window.setTimeout(() => {
       void import('@/components/ImageLightbox')
       void import('@/components/TxtViewer')
       void import('@/components/SettingsMenu')
     }, 1200)
-    return () => window.clearTimeout(t)
+    const t2 = window.setTimeout(() => {
+      void import('@/components/ImageEditor')
+    }, 4000)
+    return () => {
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
+    }
   }, [])
 
   const query = searchQuery.trim()
