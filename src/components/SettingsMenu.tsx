@@ -39,10 +39,10 @@ export default function SettingsMenu({ onDeleteAll, onLogout, onClose }: Setting
       <button
         type="button"
         aria-label="Close settings"
-        className="absolute inset-0 cursor-default bg-deep/60"
+        className="animate-overlay-in absolute inset-0 cursor-default bg-deep/60"
         onClick={onClose}
       />
-      <div className="relative w-full overflow-hidden rounded-t-2xl border border-line bg-card shadow-panel sm:w-72 sm:rounded-2xl">
+      <div className="animate-panel-in relative w-full overflow-hidden rounded-t-2xl border border-line bg-card shadow-panel sm:w-72 sm:rounded-2xl">
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
           <p className="text-sm font-medium text-ink">Settings</p>
           <button

@@ -89,6 +89,10 @@ export default function MessageInput({
     setStagedFile(file)
     setCodeMode(false)
     setPasteError(null)
+    // Warm the editor chunk now, while the user is still looking at the
+    // staged preview — tapping it then opens instantly instead of
+    // downloading ~940 kB first. Only for images; other files never open it.
+    if (isImageFile(file.type)) void import('./ImageEditor')
   }
 
   const clearStaged = () => {
@@ -256,7 +260,12 @@ export default function MessageInput({
           />
           <button
             type="button"
-            onClick={() => imageInputRef.current?.click()}
+            onClick={() => {
+              // Start downloading the editor chunk while the file picker
+              // is open, so the editor is ready the moment an image is picked.
+              void import('./ImageEditor')
+              imageInputRef.current?.click()
+            }}
             disabled={attachDisabled}
             aria-label="Send image"
             className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink disabled:opacity-40"

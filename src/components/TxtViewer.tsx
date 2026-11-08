@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { Check, Copy, Download, FileText, Loader2, X } from 'lucide-react'
 import type { Message } from '@/lib/types'
-import { formatFileSize, supabase } from '@/lib/files'
+import {
+  formatFileSize,
+  getTxtContent,
+  peekTxtContent,
+} from '@/lib/files'
 import { copyTextToClipboard } from '@/lib/clipboard'
-
-/** Max .txt content shown in the viewer (200 KB). */
-const MAX_BYTES = 200 * 1024
 
 interface TxtViewerProps {
   message: Message | null
@@ -14,14 +15,39 @@ interface TxtViewerProps {
 }
 
 export default function TxtViewer({ message, onClose, onCopyError }: TxtViewerProps) {
-  const [text, setText] = useState<string | null>(null)
-  const [truncated, setTruncated] = useState(false)
-  const [loading, setLoading] = useState(false)
+  // Instant first paint: a prefetched file (see MessageBubble) is already
+  // in the cache, so the text is here before the viewer even mounts.
+  const [text, setText] = useState<string | null>(() =>
+    message?.file_url ? (peekTxtContent(message.file_url)?.text ?? null) : null,
+  )
+  const [truncated, setTruncated] = useState(
+    () => message?.file_url ? (peekTxtContent(message.file_url)?.truncated ?? false) : false,
+  )
+  const [loading, setLoading] = useState(
+    () => !(message?.file_url && peekTxtContent(message.file_url)),
+  )
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
+  // Layout effect (runs before paint): a cached file paints its text on
+  // the very first frame — no spinner flash at all.
+  useLayoutEffect(() => {
+    if (!message?.file_url) return
+    const cached = peekTxtContent(message.file_url)
+    if (cached) {
+      setText(cached.text)
+      setTruncated(cached.truncated)
+      setLoading(false)
+      setError(null)
+      setCopied(false)
+    }
+  }, [message])
+
   useEffect(() => {
     if (!message) return
+    // Already cached (prefetched on mount) — the layout effect above
+    // already put the text on screen; nothing to download.
+    if (message.file_url && peekTxtContent(message.file_url)) return
     let cancelled = false
 
     const load = async () => {
@@ -31,23 +57,11 @@ export default function TxtViewer({ message, onClose, onCopyError }: TxtViewerPr
       setTruncated(false)
       setCopied(false)
       try {
-        // file_url is a storage path ONLY — always download from the private
-        // bucket. Never fetch() an arbitrary URL from a message row.
-        const url = message.file_url
-        if (!url) throw new Error('No file attached to this message.')
-        const { data, error: dlError } = await supabase.storage
-          .from('chat-files')
-          .download(url)
-        if (dlError || !data) throw new Error(dlError?.message ?? 'Could not download file.')
-        const raw = await data.text()
+        if (!message.file_url) throw new Error('No file attached to this message.')
+        const { text: raw, truncated: wasTruncated } = await getTxtContent(message.file_url)
         if (cancelled) return
-        const bytes = new TextEncoder().encode(raw)
-        if (bytes.length > MAX_BYTES) {
-          setText(new TextDecoder().decode(bytes.slice(0, MAX_BYTES)))
-          setTruncated(true)
-        } else {
-          setText(raw)
-        }
+        setText(raw)
+        setTruncated(wasTruncated)
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Could not load file.')
@@ -100,14 +114,14 @@ export default function TxtViewer({ message, onClose, onCopyError }: TxtViewerPr
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-deep/80 sm:items-center sm:p-6"
+      className="animate-overlay-in fixed inset-0 z-50 flex items-end justify-center bg-deep/80 sm:items-center sm:p-6"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={fileName}
     >
       <div
-        className="flex max-h-[85dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-line bg-card shadow-panel sm:w-[92vw] sm:max-w-2xl sm:rounded-2xl"
+        className="animate-panel-in flex max-h-[85dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-line bg-card shadow-panel sm:w-[92vw] sm:max-w-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 border-b border-line px-4 py-3">

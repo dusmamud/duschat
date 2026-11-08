@@ -149,6 +149,18 @@ export default function Chat() {
     }
   }, [])
 
+  // Warm up the overlay chunks once the chat is open, so the lightbox,
+  // .txt viewer and settings open instantly on first tap instead of
+  // downloading their chunk mid-tap. Tiny chunks (~4 kB each); one shot.
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      void import('@/components/ImageLightbox')
+      void import('@/components/TxtViewer')
+      void import('@/components/SettingsMenu')
+    }, 1200)
+    return () => window.clearTimeout(t)
+  }, [])
+
   const query = searchQuery.trim()
   const searchMatches = useMemo(
     () => (query ? messages.filter((m) => matchesQuery(m, query)) : []),

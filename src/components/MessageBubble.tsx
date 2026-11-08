@@ -2,7 +2,7 @@ import { lazy, memo, Suspense, useEffect, useState, type ReactNode } from 'react
 import { Check, Copy, Download, File, FileText, Pencil, Reply, Trash2, X } from 'lucide-react'
 import { getSignedFileUrl } from '@/lib/supabase'
 import { formatHHmm } from '@/lib/format'
-import { formatFileSize, isTxtFile } from '@/lib/files'
+import { formatFileSize, isTxtFile, prefetchTxtContent } from '@/lib/files'
 import { copyTextToClipboard } from '@/lib/clipboard'
 import type { Message } from '@/lib/types'
 
@@ -70,11 +70,19 @@ function MessageBubble({
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
+  const isTxt = message.type === 'file' && isTxtFile(message.file_name ?? '')
+
   // Private bucket: file_url is a storage path ONLY — always resolve it via
   // a signed URL. Never treat it as a URL and never fetch it directly.
   // getSignedFileUrl caches per path (1h) and dedupes in-flight requests.
+  // .txt files skip the signed URL (the viewer never uses one) and
+  // prefetch their text instead, so tapping the file opens instantly.
   useEffect(() => {
     if ((message.type !== 'image' && message.type !== 'file') || !message.file_url) return
+    if (isTxt) {
+      prefetchTxtContent(message.file_url)
+      return
+    }
     let cancelled = false
     void (async () => {
       try {
@@ -87,10 +95,9 @@ function MessageBubble({
     return () => {
       cancelled = true
     }
-  }, [message.type, message.file_url])
+  }, [message.type, message.file_url, isTxt])
 
   const imageUrl = message.type === 'image' ? fileUrl : null
-  const isTxt = message.type === 'file' && isTxtFile(message.file_name ?? '')
   const canEdit = isMine && (message.type === 'text' || message.type === 'code') && !message.pending
 
   const handleCopy = async () => {

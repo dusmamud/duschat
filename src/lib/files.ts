@@ -1,5 +1,5 @@
 import imageCompression from 'browser-image-compression'
-import { supabase } from './supabase'
+import { supabase, getSignedFileUrl } from './supabase'
 
 // Single shared Supabase client lives in ./supabase.ts — re-exported here
 // so older imports (e.g. TxtViewer) keep working.
@@ -63,6 +63,71 @@ export function isTxtFile(fileName: string, fileType = ''): boolean {
 
 export function isImageFile(fileType: string): boolean {
   return fileType.startsWith('image/')
+}
+
+// ---------------------------------------------------------------------------
+// .txt content — cached, capped, instant on tap.
+//
+// Opening a .txt file used to download the whole file (up to 2 MB) and
+// then show a spinner. Instead the text is fetched once (first 200 KB
+// only, via a Range request) and cached per storage path, so the viewer
+// opens instantly — and message bubbles prefetch it on mount, so by tap
+// time the text is usually already here. The viewer reads the cache
+// synchronously for its first paint (see peekTxtContent).
+// ---------------------------------------------------------------------------
+
+/** Max .txt content shown in the viewer (200 KB). */
+export const MAX_TXT_PREVIEW_BYTES = 200 * 1024
+
+export interface TxtContent {
+  text: string
+  truncated: boolean
+}
+
+const txtContentCache = new Map<string, TxtContent>()
+const txtContentInflight = new Map<string, Promise<TxtContent>>()
+
+/** Cached text for a path, if already fetched — null otherwise. */
+export function peekTxtContent(path: string): TxtContent | null {
+  return txtContentCache.get(path) ?? null
+}
+
+export async function getTxtContent(path: string): Promise<TxtContent> {
+  const cached = txtContentCache.get(path)
+  if (cached) return cached
+  const inflight = txtContentInflight.get(path)
+  if (inflight) return inflight
+  const promise = (async (): Promise<TxtContent> => {
+    const url = await getSignedFileUrl(path, 3600)
+    // Range keeps the download to the preview cap instead of the whole file.
+    const res = await fetch(url, {
+      headers: { Range: `bytes=0-${MAX_TXT_PREVIEW_BYTES - 1}` },
+    })
+    if (!res.ok) throw new Error('Could not load file.')
+    const text = await res.text()
+    // 206 + Content-Range "bytes 0-204799/<total>" tells the real size;
+    // without it, fall back to the byte length of what arrived.
+    const range = res.headers.get('content-range')
+    const total = range ? Number(range.split('/')[1]) : NaN
+    const truncated = Number.isFinite(total)
+      ? total > MAX_TXT_PREVIEW_BYTES
+      : new TextEncoder().encode(text).length >= MAX_TXT_PREVIEW_BYTES
+    const result = { text, truncated }
+    txtContentCache.set(path, result)
+    return result
+  })()
+  txtContentInflight.set(path, promise)
+  try {
+    return await promise
+  } finally {
+    txtContentInflight.delete(path)
+  }
+}
+
+/** Fire-and-forget prefetch for a .txt bubble — errors are swallowed;
+ *  the viewer retries on tap if the prefetch never landed. */
+export function prefetchTxtContent(path: string): void {
+  void getTxtContent(path).catch(() => undefined)
 }
 
 /**
