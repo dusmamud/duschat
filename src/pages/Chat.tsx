@@ -150,8 +150,9 @@ export default function Chat() {
   }, [])
 
   // Warm up the overlay chunks once the chat is open, so the lightbox,
-  // .txt viewer and settings open instantly on first tap instead of
-  // downloading their chunk mid-tap. Tiny chunks (~4 kB each); one shot.
+  // .txt viewer, settings and password generator open instantly on first
+  // tap instead of downloading their chunk mid-tap. Tiny chunks (~4 kB
+  // each); one shot.
   // The image editor chunk (~270 kB gzip) warms up a few seconds later,
   // once the chat itself is settled — ready long before the user ever
   // picks an image, instead of starting to download on tap. One download
@@ -162,6 +163,7 @@ export default function Chat() {
       void import('@/components/ImageLightbox')
       void import('@/components/TxtViewer')
       void import('@/components/SettingsMenu')
+      void import('@/components/PasswordGenerator')
     }, 1200)
     const t2 = window.setTimeout(() => {
       void import('@/components/ImageEditor')

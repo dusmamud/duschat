@@ -1,11 +1,14 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent, type RefObject } from 'react'
-import { ClipboardPaste, Code2, FileText, ImagePlus, Loader2, Paperclip, Pencil, Send, X } from 'lucide-react'
+import { ClipboardPaste, Code2, FileText, ImagePlus, KeyRound, Loader2, Paperclip, Pencil, Send, X } from 'lucide-react'
 import { formatFileSize, isImageFile } from '@/lib/files'
 import type { ReplyTarget } from '@/lib/types'
 
 // The editor (Filerobot + Konva) is heavy — it loads only when the user
 // opens it, never in the initial bundle.
 const ImageEditor = lazy(() => import('./ImageEditor'))
+// The password generator is small, but it is still an overlay chunk — it
+// loads on first open (and warms up with the other overlays in Chat.tsx).
+const PasswordGenerator = lazy(() => import('./PasswordGenerator'))
 
 interface MessageInputProps {
   onSendText: (text: string) => void
@@ -42,6 +45,7 @@ export default function MessageInput({
   const [stagedFile, setStagedFile] = useState<File | null>(null)
   const [stagedPreview, setStagedPreview] = useState<string | null>(null)
   const [editorOpen, setEditorOpen] = useState(false)
+  const [passwordGenOpen, setPasswordGenOpen] = useState(false)
   const [pasteError, setPasteError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const imageInputRef = useRef<HTMLInputElement | null>(null)
@@ -302,6 +306,14 @@ export default function MessageInput({
           >
             <ClipboardPaste className="h-[18px] w-[18px]" />
           </button>
+          <button
+            type="button"
+            onClick={() => setPasswordGenOpen(true)}
+            aria-label="Generate password"
+            className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink"
+          >
+            <KeyRound className="h-[18px] w-[18px]" />
+          </button>
         </div>
 
         <div className="flex min-w-0 flex-1 items-end gap-2">
@@ -335,6 +347,27 @@ export default function MessageInput({
           </button>
         </div>
       </div>
+
+      {passwordGenOpen && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-deep">
+              <Loader2 className="h-6 w-6 animate-spin text-ink-3" />
+            </div>
+          }
+        >
+          <PasswordGenerator
+            onClose={() => setPasswordGenOpen(false)}
+            onSend={(password) => {
+              // The password goes as a normal text message; the popup
+              // closes and the composer keeps whatever was typed.
+              onSendText(password)
+              setPasswordGenOpen(false)
+              textareaRef.current?.focus()
+            }}
+          />
+        </Suspense>
+      )}
 
       {editorOpen && stagedFile && stagedPreview && (
         <Suspense
