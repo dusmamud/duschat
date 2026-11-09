@@ -20,7 +20,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               className="h-12 w-12 shrink-0 md:h-16 md:w-16"
             />
             <div className="min-w-0 md:mt-6">
-              <p className="text-lg leading-tight font-medium text-ink">Dus Chat</p>
+              <p className="text-lg leading-tight font-medium text-balance text-ink">Dus Chat</p>
               <p className="mt-1 text-sm text-ink-2">Private chat for two</p>
               <span className="mt-3 hidden items-center gap-2 md:flex" aria-hidden>
                 <span className="flex gap-1">
@@ -31,7 +31,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               </span>
             </div>
           </div>
-          <p className="hidden max-w-60 text-sm leading-relaxed text-ink-2 md:block">
+          <p className="hidden max-w-60 text-sm leading-relaxed text-pretty text-ink-2 md:block">
             Messages, code, images and files — just between the two of you
           </p>
           <p className="hidden text-xs text-ink-3 md:block">Two accounts, and no one else</p>

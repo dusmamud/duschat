@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Loader2, Search, WifiOff, X } from 'lucide-react'
+import { ArrowDown, Loader2, Search, WifiOff, X } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { deleteAllChats } from '@/lib/supabase'
 import { formatDayKey, formatDayLabel, formatSearchDate } from '@/lib/format'
@@ -74,7 +74,7 @@ function highlightSearchText(text: string, query: string): ReactNode {
 
 function SkeletonList() {
   return (
-    <div className="flex flex-col gap-4" aria-label="Loading messages">
+    <div className="flex flex-col gap-4" role="status" aria-label="Loading messages">
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <div key={i} className={`flex flex-col ${i % 2 === 0 ? 'items-start' : 'items-end'}`}>
           <div className="mb-1.5 h-3 w-20 rounded bg-raised" />
@@ -186,7 +186,7 @@ export default function Chat() {
 
   if (authLoading || !user) {
     return (
-      <div className="flex h-dvh items-center justify-center bg-page text-ink-3">
+      <div className="flex h-dvh items-center justify-center bg-page text-ink-3" role="status" aria-label="Loading">
         <Loader2 className="h-6 w-6 animate-spin" />
       </div>
     )
@@ -269,10 +269,17 @@ export default function Chat() {
 
   return (
     <div className="flex h-dvh flex-col bg-page text-ink">
+      <a
+        href="#messages"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[80] focus:rounded-lg focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-page"
+      >
+        Skip to messages
+      </a>
       <ChatHeader
         otherUser={otherUser}
         otherOnline={otherOnline}
         searchActive={searchOpen}
+        searchDisabled={messages.length === 0}
         onToggleSearch={() => {
           setSearchOpen((v) => !v)
           setSearchQuery('')
@@ -295,12 +302,12 @@ export default function Chat() {
                     setSearchOpen(false)
                   }
                 }}
-                placeholder="Search messages"
+                placeholder="Search messages…"
                 aria-label="Search messages"
                 className="min-w-0 flex-1 bg-transparent py-2.5 text-sm text-ink placeholder:text-ink-3 focus:outline-none"
               />
               {searchQuery && (
-                <span className="shrink-0 font-mono text-xs text-ink-3">
+                <span className="shrink-0 font-mono text-xs tabular-nums text-ink-3">
                   {searchMatches.length} match{searchMatches.length === 1 ? '' : 'es'}
                 </span>
               )}
@@ -329,16 +336,16 @@ export default function Chat() {
       {isOnline && !channelConnected && !loading && (
         <div className="flex items-center justify-center gap-2 border-b border-line bg-card px-4 py-1.5 text-xs text-ink-3">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Reconnecting
+          Reconnecting…
         </div>
       )}
 
-      <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
+      <div ref={listRef} id="messages" tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto focus:outline-none">
         <div className="mx-auto w-full max-w-3xl px-4 py-4">
           {/* Top sentinel for infinite scroll — loads older pages. */}
           <div ref={topSentinelRef} aria-hidden className="h-px w-full" />
           {loadingMore && (
-            <p className="pb-3 text-center text-xs text-ink-3">Loading older messages</p>
+            <p className="pb-3 text-center text-xs text-ink-3" role="status">Loading older messages…</p>
           )}
           {loading ? (
             <SkeletonList />
@@ -346,14 +353,21 @@ export default function Chat() {
             searchMatches.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 py-24 text-center">
                 <Search className="h-8 w-8 text-ink-3" />
-                <p className="text-sm font-medium text-ink">No matches for “{query}”</p>
-                <p className="max-w-xs text-xs text-ink-3">
+                <p className="text-sm font-medium text-balance text-ink">No matches for “{query}”</p>
+                <p className="max-w-xs text-xs text-pretty text-ink-3">
                   Search covers messages already loaded here
                 </p>
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="mt-1 text-sm font-medium text-ink underline underline-offset-4 transition-colors hover:text-white"
+                >
+                  Clear search
+                </button>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                <p className="text-center text-xs text-ink-3">
+                <p className="text-center text-xs tabular-nums text-ink-3">
                   {searchMatches.length} match{searchMatches.length === 1 ? '' : 'es'} — tap one to jump to it
                 </p>
                 {searchMatches.map((m) => (
@@ -363,10 +377,13 @@ export default function Chat() {
                     onClick={() => jumpToMessage(m.id)}
                     className="rounded-xl border border-line bg-card px-3.5 py-3 text-left transition-colors hover:border-line-strong hover:bg-raised"
                   >
-                    <span className="mb-1 block font-mono text-xs text-ink-3">
-                      {m.sender_id === user.id ? 'You' : (m.sender?.name ?? m.sender?.username ?? 'Unknown')}
-                      {' · '}
-                      {formatSearchDate(new Date(m.created_at))}
+                    <span className="mb-1 flex items-center gap-1.5 text-xs">
+                      <span className="font-medium text-ink-2">
+                        {m.sender_id === user.id ? 'You' : (m.sender?.name ?? m.sender?.username ?? 'Unknown')}
+                      </span>
+                      <span className="font-mono tabular-nums text-ink-3">
+                        {formatSearchDate(new Date(m.created_at))}
+                      </span>
                     </span>
                     <span className="block truncate text-sm text-ink">
                       {m.content
@@ -384,14 +401,14 @@ export default function Chat() {
                 <span className="h-2 w-2 rounded-full bg-amber" />
                 <span className="h-2 w-2 rounded-full bg-amber" />
               </span>
-              <p className="text-base font-medium text-ink">No messages yet</p>
-              <p className="max-w-xs text-sm text-ink-2">
+              <p className="text-base font-medium text-balance text-ink">No messages yet</p>
+              <p className="max-w-xs text-sm text-pretty text-ink-2">
                 Say hi to {otherUser?.name ?? 'the other person'} — text, code, images and files, just between the two of you
               </p>
               <button
                 type="button"
                 onClick={() => document.getElementById('composer')?.focus()}
-                className="mt-1 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-page transition-colors hover:bg-white"
+                className="mt-1 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-page transition-[background-color,transform] hover:bg-white active:scale-[0.98]"
               >
                 Send a message
               </button>
@@ -438,7 +455,7 @@ export default function Chat() {
           <button
             type="button"
             onClick={handleRetryUpload}
-            className="shrink-0 rounded-lg bg-danger px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-danger/90"
+            className="h-10 shrink-0 rounded-lg bg-danger px-3 text-xs font-medium text-white transition-colors hover:bg-danger/90"
           >
             Retry
           </button>
@@ -460,7 +477,7 @@ export default function Chat() {
           <div className="mx-auto flex w-full max-w-3xl items-center gap-2 text-xs text-ink-2">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span className="min-w-0 flex-1 truncate">
-              Uploading {uploading.fileName}
+              Uploading {uploading.fileName}…
             </span>
           </div>
           <div className="mx-auto mt-2 h-1 w-full max-w-3xl overflow-hidden rounded-full bg-raised">
@@ -470,7 +487,7 @@ export default function Chat() {
       )}
 
       {typingName && (
-        <div className="flex items-center gap-2 border-t border-line bg-page px-4 py-2 text-xs text-ink-2">
+        <div className="flex items-center gap-2 border-t border-line bg-page px-4 py-2 text-xs text-ink-2" aria-live="polite">
           <div className="mx-auto flex w-full max-w-3xl items-center gap-2">
             <span className="flex gap-1" aria-hidden>
               <span className="typing-dot h-1.5 w-1.5 rounded-full bg-amber" />
@@ -487,13 +504,15 @@ export default function Chat() {
           <button
             type="button"
             onClick={jumpToBottom}
-            className="absolute -top-12 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-ink px-4 py-1.5 text-xs font-medium whitespace-nowrap text-page shadow-panel transition-colors hover:bg-white"
+            className="absolute -top-12 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-lg bg-ink px-4 py-1.5 text-xs font-medium whitespace-nowrap text-page shadow-panel transition-colors hover:bg-white"
           >
-            ↓ New messages
+            <ArrowDown className="h-4 w-4" aria-hidden />
+            New messages
           </button>
         )}
         <div className="mx-auto w-full max-w-3xl">
           <MessageInput
+            otherName={otherUser?.name}
             onSendText={(text) => void sendText(text)}
             onSendCode={(code) => void sendCode(code)}
             onSendFile={(text, file) => void handleSendFile(text, file)}

@@ -61,8 +61,8 @@ export default function Signup({ onSwitchToLogin, onDone }: SignupProps) {
 
   return (
     <AuthLayout>
-      <h1 className="text-xl font-medium text-ink">Create your account</h1>
-      <p className="mt-1 text-sm text-ink-2">Only two accounts can ever register</p>
+      <h1 className="text-xl font-medium text-balance text-ink">Create your account</h1>
+      <p className="mt-1 text-sm text-pretty text-ink-2">Only two accounts can ever register</p>
 
       {formError && (
         <div
@@ -159,7 +159,14 @@ export default function Signup({ onSwitchToLogin, onDone }: SignupProps) {
               aria-label={showPassword ? 'Hide password' : 'Show password'}
               className="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-[10px] text-ink-3 transition-colors hover:bg-raised hover:text-ink"
             >
-              {showPassword ? <EyeOff className="h-[18px] w-[18px]" aria-hidden /> : <Eye className="h-[18px] w-[18px]" aria-hidden />}
+              <span className="relative h-[18px] w-[18px]" aria-hidden>
+                <Eye
+                  className={`absolute inset-0 h-[18px] w-[18px] transition-[opacity,transform,filter] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${showPassword ? 'scale-[0.25] opacity-0 blur-[4px]' : 'scale-100 opacity-100 blur-0'}`}
+                />
+                <EyeOff
+                  className={`absolute inset-0 h-[18px] w-[18px] transition-[opacity,transform,filter] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${showPassword ? 'scale-100 opacity-100 blur-0' : 'scale-[0.25] opacity-0 blur-[4px]'}`}
+                />
+              </span>
             </button>
           </div>
           {errors.password && (
@@ -171,7 +178,7 @@ export default function Signup({ onSwitchToLogin, onDone }: SignupProps) {
 
         <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-          {isSubmitting ? 'Creating account' : 'Sign up'}
+          {isSubmitting ? 'Creating account…' : 'Sign up'}
         </Button>
       </form>
 

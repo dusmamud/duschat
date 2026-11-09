@@ -31,8 +31,10 @@ function sanitizeExtension(fileName: string): string {
 }
 
 export function formatFileSize(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes < 0) return '0 B'
-  if (bytes < 1024) return `${bytes} B`
+  // Non-breaking space between number and unit, so "935 KB" never wraps
+  // with the number on one line and the unit on the next.
+  if (!Number.isFinite(bytes) || bytes < 0) return '0\u00A0B'
+  if (bytes < 1024) return `${bytes}\u00A0B`
   const units = ['KB', 'MB', 'GB']
   let size = bytes / 1024
   let unit = 0
@@ -40,7 +42,7 @@ export function formatFileSize(bytes: number): string {
     size /= 1024
     unit += 1
   }
-  return `${size.toFixed(size >= 10 ? 0 : 1)} ${units[unit]}`
+  return `${size.toFixed(size >= 10 ? 0 : 1)}\u00A0${units[unit]}`
 }
 
 export interface UploadedImage {
@@ -141,7 +143,7 @@ export function prefetchTxtContent(path: string): void {
 export async function uploadFile(file: File, userId: string): Promise<UploadedFile> {
   assertSafeType(file.type)
   if (file.size > MAX_FILE_BYTES) {
-    throw new Error('File must be 10 MB or smaller.')
+    throw new Error('File must be 10\u00A0MB or smaller.')
   }
   const ext = sanitizeExtension(file.name)
   const path = `${userId}/${crypto.randomUUID()}${ext}`
@@ -201,7 +203,7 @@ export async function uploadTxt(file: File, userId: string): Promise<UploadedTxt
     throw new Error('Only .txt files are supported.')
   }
   if (file.size > MAX_TXT_BYTES) {
-    throw new Error('Text file must be 2 MB or smaller.')
+    throw new Error('Text file must be 2\u00A0MB or smaller.')
   }
   const path = `${userId}/${crypto.randomUUID()}.txt`
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, {

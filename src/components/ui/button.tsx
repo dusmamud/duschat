@@ -1,4 +1,4 @@
-import { forwardRef, type ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, Ref } from 'react'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
@@ -9,15 +9,17 @@ export function cn(...inputs: ClassValue[]) {
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'ghost' | 'outline' | 'destructive'
   size?: 'default' | 'sm' | 'icon'
+  ref?: Ref<HTMLButtonElement>
 }
 
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'default', type = 'button', ...props }, ref) => (
+// React 19: ref is a regular prop — no forwardRef wrapper.
+function Button({ className, variant = 'primary', size = 'default', type = 'button', ref, ...props }: ButtonProps) {
+  return (
     <button
       ref={ref}
       type={type}
       className={cn(
-        'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
+        'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-medium transition-[background-color,transform] disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
         variant === 'primary' &&
           'bg-ink text-page hover:bg-white',
         variant === 'ghost' &&
@@ -33,9 +35,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       )}
       {...props}
     />
-  ),
-)
-Button.displayName = 'Button'
+  )
+}
 
 export { Button }
 export default Button

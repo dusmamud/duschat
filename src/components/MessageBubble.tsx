@@ -158,14 +158,17 @@ function MessageBubble({
     >
       <div className={`flex max-w-[85%] flex-col sm:max-w-[75%] ${isMine ? 'items-end' : 'items-start'}`}>
         {showHeader && (
-          <span className="mb-1 flex items-center gap-1.5 px-1 font-mono text-xs text-ink-3">
+          <span className="mb-1 flex items-center gap-1.5 px-1 text-xs">
             {!isMine && (
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-raised text-xs font-medium text-ink-2">
                 {initial}
               </span>
             )}
-            {senderName} · {time}
-            {message.edited ? ' · edited' : ''}
+            <span className="font-medium text-ink-2">{senderName}</span>
+            <span className="font-mono tabular-nums text-ink-3">
+              {time}
+              {message.edited ? ' (edited)' : ''}
+            </span>
           </span>
         )}
 
@@ -222,9 +225,9 @@ function MessageBubble({
                   type="button"
                   onClick={() => void handleSaveEdit()}
                   disabled={saving || !draft.trim()}
-                  className="rounded-lg bg-ink px-3 py-1.5 text-xs font-medium text-page transition-colors hover:bg-white disabled:opacity-50"
+                  className="hit-40 rounded-lg bg-ink px-3 py-2 text-xs font-medium text-page transition-[background-color,transform] hover:bg-white active:scale-[0.98] disabled:opacity-50"
                 >
-                  {saving ? 'Saving' : 'Save'}
+                  {saving ? 'Saving…' : 'Save'}
                 </button>
                 <button
                   type="button"
@@ -233,7 +236,7 @@ function MessageBubble({
                     setDraft(message.content)
                   }}
                   disabled={saving}
-                  className="rounded-lg border border-line-strong px-3 py-1.5 text-xs text-ink transition-colors hover:bg-raised disabled:opacity-50"
+                  className="hit-40 rounded-lg border border-line-strong px-3 py-2 text-xs text-ink transition-[background-color,transform] hover:bg-raised active:scale-[0.98] disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -261,7 +264,7 @@ function MessageBubble({
                   alt={message.file_name ?? 'Image'}
                   loading="lazy"
                   decoding="async"
-                  className="max-h-72 w-auto max-w-full rounded-xl border border-line object-contain"
+                  className="img-edge max-h-72 w-auto max-w-full rounded-xl object-contain"
                 />
               </button>
             ) : (
@@ -283,8 +286,11 @@ function MessageBubble({
                   <span className="block truncate text-sm font-medium">
                     {highlight(message.file_name ?? 'file.txt', searchQuery)}
                   </span>
-                  <span className="block text-xs text-ink-2">
-                    {message.file_size != null ? formatFileSize(message.file_size) : 'Text file'} · Tap to view
+                  <span className="flex items-center gap-1.5 text-xs text-ink-2">
+                    <span className="font-mono tabular-nums">
+                      {message.file_size != null ? formatFileSize(message.file_size) : 'Text file'}
+                    </span>
+                    <span>Tap to view</span>
                   </span>
                 </span>
               </button>
@@ -303,8 +309,11 @@ function MessageBubble({
                   <span className="block truncate text-sm font-medium">
                     {highlight(message.file_name ?? 'file', searchQuery)}
                   </span>
-                  <span className="block text-xs text-ink-2">
-                    {message.file_size != null ? formatFileSize(message.file_size) : 'File'} · Tap to download
+                  <span className="flex items-center gap-1.5 text-xs text-ink-2">
+                    <span className="font-mono tabular-nums">
+                      {message.file_size != null ? formatFileSize(message.file_size) : 'File'}
+                    </span>
+                    <span>Tap to download</span>
                   </span>
                 </span>
                 <Download className="h-4 w-4 shrink-0 text-ink-3" />
@@ -315,34 +324,41 @@ function MessageBubble({
               </div>
             )
           ) : (
-            <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+            <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words text-pretty">
               {highlight(message.content, searchQuery)}
             </p>
           )}
           {/* Caption typed with a file/image — shows under the media. */}
           {(message.type === 'image' || message.type === 'file') && message.content ? (
-            <p className="mt-2 px-1 text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+            <p className="mt-2 px-1 text-[15px] leading-relaxed whitespace-pre-wrap break-words text-pretty">
               {highlight(message.content, searchQuery)}
             </p>
           ) : null}
         </div>
 
         {/* Actions stay visible on touch screens, and reveal on hover / keyboard focus on desktop — otherwise every message carries a row of buttons. */}
-        <div className="mt-1 flex flex-wrap items-center gap-1 px-1 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-focus-within:opacity-100 [@media(hover:hover)]:group-hover:opacity-100">
+        <div className="mt-1 flex flex-wrap items-center gap-2 px-1 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-focus-within:opacity-100 [@media(hover:hover)]:group-hover:opacity-100">
           <button
             type="button"
             onClick={() => void handleCopy()}
             aria-label={copied ? 'Copied' : 'Copy message'}
-            className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-ink-3 transition-colors hover:bg-raised hover:text-ink"
+            className="hit-40 flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-ink-3 transition-colors hover:bg-raised hover:text-ink"
           >
-            {copied ? <Check className="h-4 w-4 text-ok" /> : <Copy className="h-4 w-4" />}
+            <span className="relative h-4 w-4 shrink-0" aria-hidden>
+              <Copy
+                className={`absolute inset-0 h-4 w-4 transition-[opacity,transform,filter] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${copied ? 'scale-[0.25] opacity-0 blur-[4px]' : 'scale-100 opacity-100 blur-0'}`}
+              />
+              <Check
+                className={`absolute inset-0 h-4 w-4 text-ok transition-[opacity,transform,filter] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${copied ? 'scale-100 opacity-100 blur-0' : 'scale-[0.25] opacity-0 blur-[4px]'}`}
+              />
+            </span>
             {copied ? 'Copied' : 'Copy'}
           </button>
           <button
             type="button"
             onClick={() => onReply(message)}
             aria-label="Reply to message"
-            className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-ink-3 transition-colors hover:bg-raised hover:text-ink"
+            className="hit-40 flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-ink-3 transition-colors hover:bg-raised hover:text-ink"
           >
             <Reply className="h-4 w-4" />
             Reply
@@ -355,7 +371,7 @@ function MessageBubble({
                 setEditing(true)
               }}
               aria-label="Edit message"
-              className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-ink-3 transition-colors hover:bg-raised hover:text-ink"
+              className="hit-40 flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-ink-3 transition-colors hover:bg-raised hover:text-ink"
             >
               <Pencil className="h-4 w-4" />
               Edit
@@ -363,22 +379,22 @@ function MessageBubble({
           )}
           {isMine && !message.pending && (
             confirmingDelete ? (
-              <span className="flex min-h-8 items-center gap-1 rounded-md bg-danger-soft px-1.5 py-1 text-xs text-danger">
+              <span className="flex min-h-8 items-center gap-2 rounded-md bg-danger-soft px-1.5 py-1 text-xs text-danger">
                 Delete?
                 <button
                   type="button"
                   onClick={() => void handleDelete()}
                   disabled={deleting}
-                  className="rounded px-1.5 py-0.5 font-medium text-danger transition-colors hover:bg-danger/20 disabled:opacity-50"
+                  className="hit-40 rounded-md bg-danger px-3 py-1 font-medium text-white transition-colors hover:bg-danger/90 disabled:opacity-50"
                 >
-                  {deleting ? 'Deleting' : 'Yes'}
+                  {deleting ? 'Deleting…' : 'Yes'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmingDelete(false)}
                   disabled={deleting}
                   aria-label="Cancel delete"
-                  className="rounded p-0.5 transition-colors hover:bg-danger/20 disabled:opacity-50"
+                  className="hit-40 rounded-md p-0.5 transition-colors hover:bg-danger/20 disabled:opacity-50"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -388,7 +404,7 @@ function MessageBubble({
                 type="button"
                 onClick={() => setConfirmingDelete(true)}
                 aria-label="Delete message"
-                className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-ink-3 transition-colors hover:bg-danger-soft hover:text-danger"
+                className="hit-40 flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-ink-3 transition-colors hover:bg-danger-soft hover:text-danger"
               >
                 <Trash2 className="h-4 w-4" />
                 Delete

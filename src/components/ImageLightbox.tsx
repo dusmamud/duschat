@@ -78,7 +78,7 @@ export default function ImageLightbox({ url, fileName, onClose }: ImageLightboxP
       onClick={onClose}
     >
       <div className="flex items-center justify-between gap-2 px-3 py-2.5">
-        <p className="min-w-0 flex-1 truncate px-1 text-sm text-ink-2">{fileName}</p>
+        <h2 className="min-w-0 flex-1 truncate px-1 text-sm font-medium text-ink-2">{fileName}</h2>
         <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
@@ -86,11 +86,14 @@ export default function ImageLightbox({ url, fileName, onClose }: ImageLightboxP
             aria-label={copied ? 'Copied' : 'Copy image'}
             className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink"
           >
-            {copied ? (
-              <Check className="h-[18px] w-[18px] text-ok" />
-            ) : (
-              <Copy className={`h-[18px] w-[18px] ${copyFailed ? 'text-danger' : ''}`} />
-            )}
+            <span className="relative h-[18px] w-[18px] shrink-0" aria-hidden>
+              <Copy
+                className={`absolute inset-0 h-[18px] w-[18px] transition-[opacity,transform,filter] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${copied ? 'scale-[0.25] opacity-0 blur-[4px]' : 'scale-100 opacity-100 blur-0'} ${copyFailed ? 'text-danger' : ''}`}
+              />
+              <Check
+                className={`absolute inset-0 h-[18px] w-[18px] text-ok transition-[opacity,transform,filter] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${copied ? 'scale-100 opacity-100 blur-0' : 'scale-[0.25] opacity-0 blur-[4px]'}`}
+              />
+            </span>
           </button>
           <button
             type="button"
@@ -135,14 +138,14 @@ export default function ImageLightbox({ url, fileName, onClose }: ImageLightboxP
       </div>
 
       <div
-        className="animate-panel-in flex min-h-0 flex-1 items-center justify-center overflow-auto p-3"
+        className="animate-panel-in flex min-h-0 flex-1 items-center justify-center overflow-auto overscroll-contain p-3"
         onClick={(e) => e.stopPropagation()}
       >
         <img
           src={url}
           alt={fileName}
           style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}
-          className={`max-h-full max-w-full object-contain transition-transform duration-200 ease-smooth ${scale === 1 ? 'cursor-zoom-in' : 'cursor-zoom-out'}`}
+          className={`img-edge max-h-full max-w-full object-contain transition-transform duration-200 ease-smooth ${scale === 1 ? 'cursor-zoom-in' : 'cursor-zoom-out'}`}
           onClick={() => setScale((s) => (s === 1 ? 2 : 1))}
         />
       </div>
@@ -152,7 +155,7 @@ export default function ImageLightbox({ url, fileName, onClose }: ImageLightboxP
           ? 'Copied to clipboard'
           : copyFailed
             ? 'Copy failed — try downloading instead'
-            : 'Tap the image to toggle zoom · Scroll to pan when zoomed'}
+            : 'Tap the image to toggle zoom — scroll to pan when zoomed'}
       </p>
     </div>
   )

@@ -31,7 +31,7 @@ export default function CodeBlock({ code, language = 'text' }: CodeBlockProps) {
 
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-deep">
-      <div className="flex items-center justify-between border-b border-line px-3 py-1.5">
+      <div className="flex items-center justify-between border-b border-line px-3 py-1">
         <span className="font-mono text-xs text-ink-3">
           {language === 'text' ? 'Code' : language}
         </span>
@@ -39,19 +39,21 @@ export default function CodeBlock({ code, language = 'text' }: CodeBlockProps) {
           type="button"
           onClick={() => void handleCopy()}
           aria-label={copied ? 'Copied' : 'Copy code'}
-          className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ink-2 transition-colors hover:bg-raised hover:text-ink"
+          className="hit-40 flex items-center gap-1.5 rounded-md px-2 py-2 text-xs text-ink-2 transition-colors hover:bg-raised hover:text-ink"
         >
           {copyFailed ? (
             <span className="text-danger">Copy failed</span>
-          ) : copied ? (
-            <>
-              <Check className="h-4 w-4 text-ok" />
-              <span className="text-ok">Copied</span>
-            </>
           ) : (
             <>
-              <Copy className="h-4 w-4" />
-              <span>Copy</span>
+              <span className="relative h-4 w-4 shrink-0" aria-hidden>
+                <Copy
+                  className={`absolute inset-0 h-4 w-4 transition-[opacity,transform,filter] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${copied ? 'scale-[0.25] opacity-0 blur-[4px]' : 'scale-100 opacity-100 blur-0'}`}
+                />
+                <Check
+                  className={`absolute inset-0 h-4 w-4 text-ok transition-[opacity,transform,filter] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${copied ? 'scale-100 opacity-100 blur-0' : 'scale-[0.25] opacity-0 blur-[4px]'}`}
+                />
+              </span>
+              <span className={copied ? 'text-ok' : undefined}>{copied ? 'Copied' : 'Copy'}</span>
             </>
           )}
         </button>

@@ -97,7 +97,7 @@ export default function TxtViewer({ message, onClose, onCopyError }: TxtViewerPr
       setCopied(true)
       window.setTimeout(() => setCopied(false), 1500)
     } catch {
-      onCopyError('Could not copy — please copy manually.')
+      onCopyError('Could not copy — please copy manually')
     }
   }
 
@@ -127,28 +127,27 @@ export default function TxtViewer({ message, onClose, onCopyError }: TxtViewerPr
         <div className="flex items-center gap-3 border-b border-line px-4 py-3">
           <FileText className="h-[18px] w-[18px] shrink-0 text-ink-2" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-ink">{fileName}</p>
+            <h2 className="truncate text-sm font-medium text-ink">{fileName}</h2>
             {message.file_size != null && (
-              <p className="font-mono text-xs text-ink-3">{formatFileSize(message.file_size)}</p>
+              <p className="font-mono text-xs tabular-nums text-ink-3">{formatFileSize(message.file_size)}</p>
             )}
           </div>
           <button
             type="button"
             onClick={() => void handleCopy()}
             disabled={!text}
+            aria-label={copied ? 'Copied' : 'Copy file text'}
             className="flex h-10 shrink-0 items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-xs text-ink-2 transition-colors hover:bg-raised hover:text-ink disabled:opacity-40"
           >
-            {copied ? (
-              <>
-                <Check className="h-4 w-4 text-ok" />
-                <span className="hidden sm:inline">Copied</span>
-              </>
-            ) : (
-              <>
-                <Copy className="h-4 w-4" />
-                <span className="hidden sm:inline">Copy</span>
-              </>
-            )}
+            <span className="relative h-4 w-4 shrink-0" aria-hidden>
+              <Copy
+                className={`absolute inset-0 h-4 w-4 transition-[opacity,transform,filter] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${copied ? 'scale-[0.25] opacity-0 blur-[4px]' : 'scale-100 opacity-100 blur-0'}`}
+              />
+              <Check
+                className={`absolute inset-0 h-4 w-4 text-ok transition-[opacity,transform,filter] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${copied ? 'scale-100 opacity-100 blur-0' : 'scale-[0.25] opacity-0 blur-[4px]'}`}
+              />
+            </span>
+            <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
           </button>
           <button
             type="button"
@@ -169,11 +168,11 @@ export default function TxtViewer({ message, onClose, onCopyError }: TxtViewerPr
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto p-4">
+        <div className="min-h-0 flex-1 overflow-auto overscroll-contain p-4">
           {loading && (
             <div className="flex items-center justify-center gap-2 py-16 text-sm text-ink-2">
               <Loader2 className="h-5 w-5 animate-spin" />
-              Loading file
+              Loading file…
             </div>
           )}
           {error && !loading && (
@@ -186,7 +185,7 @@ export default function TxtViewer({ message, onClose, onCopyError }: TxtViewerPr
             <>
               {truncated && (
                 <p className="mb-3 rounded-lg border border-amber/25 bg-amber/10 px-3 py-2 text-xs text-amber">
-                  Showing the first 200 KB of this file. Download it to see the full
+                  Showing the first 200&nbsp;KB of this file. Download it to see the full
                   content.
                 </p>
               )}

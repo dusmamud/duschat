@@ -11,6 +11,8 @@ const ImageEditor = lazy(() => import('./ImageEditor'))
 const PasswordGenerator = lazy(() => import('./PasswordGenerator'))
 
 interface MessageInputProps {
+  /** Name of the other person, for the composer placeholder ("Message Kum…"). */
+  otherName?: string
   onSendText: (text: string) => void
   onSendCode: (code: string) => void
   /** Send a staged file with the typed text as its caption (may be empty). */
@@ -32,6 +34,7 @@ const NATIVE_AUTOSIZE =
   typeof CSS !== 'undefined' && CSS.supports('field-sizing', 'content')
 
 export default function MessageInput({
+  otherName,
   onSendText,
   onSendCode,
   onSendFile,
@@ -214,7 +217,7 @@ export default function MessageInput({
               aria-label="Edit image"
               className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md"
             >
-              <img src={stagedPreview} alt="" className="h-full w-full object-cover" />
+              <img src={stagedPreview} alt="" className="img-edge h-full w-full object-cover" />
               <span className="absolute inset-0 flex items-center justify-center bg-deep/40 opacity-0 transition-opacity hover:opacity-100">
                 <Pencil className="h-4 w-4 text-white" />
               </span>
@@ -226,9 +229,9 @@ export default function MessageInput({
           )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-medium text-ink">{stagedFile.name}</p>
-            <p className="text-xs text-ink-3">
-              {formatFileSize(stagedFile.size)}
-              {stagedPreview ? ' · Tap the image to edit' : ' · Sends when you press send'}
+            <p className="flex items-center gap-1.5 text-xs text-ink-3">
+              <span className="font-mono tabular-nums">{formatFileSize(stagedFile.size)}</span>
+              <span>{stagedPreview ? 'Tap the image to edit' : 'Sends when you press send'}</span>
             </p>
           </div>
           <button
@@ -331,8 +334,11 @@ export default function MessageInput({
             }}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            placeholder={codeMode ? 'Paste code' : stagedFile ? 'Add a caption' : 'Message'}
+            placeholder={codeMode ? 'Paste code…' : stagedFile ? 'Add a caption…' : otherName ? `Message ${otherName}…` : 'Message…'}
             aria-label="Message"
+            spellCheck={!codeMode}
+            autoCapitalize={codeMode ? 'off' : undefined}
+            autoCorrect={codeMode ? 'off' : undefined}
             className="field-sizing-content max-h-[160px] min-h-[44px] flex-1 resize-none rounded-[10px] border border-line bg-raised px-4 py-2.5 text-[15px] text-ink transition-colors placeholder:text-ink-3 focus:border-amber/50 focus:outline-none"
           />
 
@@ -351,7 +357,7 @@ export default function MessageInput({
       {passwordGenOpen && (
         <Suspense
           fallback={
-            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-deep">
+            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-deep" role="status" aria-label="Loading">
               <Loader2 className="h-6 w-6 animate-spin text-ink-3" />
             </div>
           }
@@ -372,7 +378,7 @@ export default function MessageInput({
       {editorOpen && stagedFile && stagedPreview && (
         <Suspense
           fallback={
-            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-deep">
+            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-deep" role="status" aria-label="Loading">
               <Loader2 className="h-6 w-6 animate-spin text-ink-3" />
             </div>
           }

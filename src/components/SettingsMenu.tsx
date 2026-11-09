@@ -44,7 +44,7 @@ export default function SettingsMenu({ onDeleteAll, onLogout, onClose }: Setting
       />
       <div className="animate-panel-in relative w-full overflow-hidden rounded-t-2xl border border-line bg-card shadow-panel sm:w-72 sm:rounded-2xl">
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
-          <p className="text-sm font-medium text-ink">Settings</p>
+          <h2 className="text-sm font-medium text-ink">Settings</h2>
           <button
             type="button"
             onClick={onClose}
@@ -70,7 +70,7 @@ export default function SettingsMenu({ onDeleteAll, onLogout, onClose }: Setting
                   type="button"
                   onClick={() => void handleConfirmDelete()}
                   disabled={deleting}
-                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-lg bg-danger px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-danger/90 disabled:opacity-60"
+                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-lg bg-danger px-3 py-2 text-sm font-medium text-white transition-[background-color,transform] hover:bg-danger/90 active:scale-[0.98] disabled:opacity-60"
                 >
                   {deleting ? (
                     <>
@@ -91,7 +91,7 @@ export default function SettingsMenu({ onDeleteAll, onLogout, onClose }: Setting
                     setError(null)
                   }}
                   disabled={deleting}
-                  className="h-11 flex-1 rounded-lg border border-line-strong px-3 py-2 text-sm text-ink transition-colors hover:bg-raised disabled:opacity-60"
+                  className="h-11 flex-1 rounded-lg border border-line-strong px-3 py-2 text-sm text-ink transition-[background-color,transform] hover:bg-raised active:scale-[0.98] disabled:opacity-60"
                 >
                   Cancel
                 </button>

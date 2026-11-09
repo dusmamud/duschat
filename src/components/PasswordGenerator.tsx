@@ -132,7 +132,14 @@ export default function PasswordGenerator({ onClose, onSend }: PasswordGenerator
                 aria-label="Copy password"
                 className="flex h-10 shrink-0 items-center gap-1.5 rounded-[10px] border border-line bg-raised px-3 text-sm text-ink-2 transition-colors hover:text-ink disabled:opacity-40"
               >
-                {copied ? <Check className="h-4 w-4 text-[#4caf78]" /> : <Copy className="h-4 w-4" />}
+                <span className="relative h-4 w-4 shrink-0" aria-hidden>
+                  <Copy
+                    className={`absolute inset-0 h-4 w-4 transition-[opacity,transform,filter] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${copied ? 'scale-[0.25] opacity-0 blur-[4px]' : 'scale-100 opacity-100 blur-0'}`}
+                  />
+                  <Check
+                    className={`absolute inset-0 h-4 w-4 text-[#4caf78] transition-[opacity,transform,filter] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${copied ? 'scale-100 opacity-100 blur-0' : 'scale-[0.25] opacity-0 blur-[4px]'}`}
+                  />
+                </span>
                 {copied ? 'Copied' : 'Copy'}
               </button>
             </div>
@@ -150,7 +157,7 @@ export default function PasswordGenerator({ onClose, onSend }: PasswordGenerator
           <div>
             <div className="mb-1.5 flex items-baseline justify-between">
               <label htmlFor="pw-length" className="text-sm text-ink-2">Length</label>
-              <span className="font-mono text-sm font-medium text-ink">{options.length}</span>
+              <span className="font-mono text-sm font-medium tabular-nums text-ink">{options.length}</span>
             </div>
             <input
               id="pw-length"
@@ -203,8 +210,11 @@ export default function PasswordGenerator({ onClose, onSend }: PasswordGenerator
           <div>
             <div className="mb-1.5 flex items-baseline justify-between">
               <span className="text-sm text-ink-2">Strength</span>
-              <span className={`text-sm font-medium ${STRENGTH_STYLE[strength.level].text}`}>
-                {strength.label} · {strength.bits} bits
+              <span className="flex items-baseline gap-1.5">
+                <span className={`text-sm font-medium ${STRENGTH_STYLE[strength.level].text}`}>
+                  {strength.label}
+                </span>
+                <span className="font-mono text-xs tabular-nums text-ink-3">{strength.bits} bits</span>
               </span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-raised">
@@ -221,7 +231,7 @@ export default function PasswordGenerator({ onClose, onSend }: PasswordGenerator
               type="button"
               onClick={regenerate}
               disabled={!anySet}
-              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-[10px] border border-line bg-raised text-sm font-medium text-ink transition-colors hover:bg-card disabled:opacity-40"
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-[10px] border border-line bg-raised text-sm font-medium text-ink transition-[background-color,transform] hover:bg-card active:scale-[0.98] disabled:opacity-40"
             >
               <Dices className="h-4 w-4" />
               Generate
@@ -236,7 +246,7 @@ export default function PasswordGenerator({ onClose, onSend }: PasswordGenerator
               Send
             </button>
           </div>
-          <p className="text-center text-xs leading-relaxed text-ink-3">
+          <p className="text-center text-xs leading-relaxed text-pretty text-ink-3">
             Generated on this device with secure randomness — nothing leaves the app until you send or copy it
           </p>
         </div>

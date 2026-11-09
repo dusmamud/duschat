@@ -1,4 +1,4 @@
-import { forwardRef, type InputHTMLAttributes } from 'react'
+import type { InputHTMLAttributes, Ref } from 'react'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
@@ -8,10 +8,12 @@ function cn(...inputs: ClassValue[]) {
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   invalid?: boolean
+  ref?: Ref<HTMLInputElement>
 }
 
-const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, invalid, type = 'text', ...props }, ref) => (
+// React 19: ref is a regular prop — no forwardRef wrapper.
+function Input({ className, invalid, type = 'text', ref, ...props }: InputProps) {
+  return (
     <input
       ref={ref}
       type={type}
@@ -22,9 +24,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       )}
       {...props}
     />
-  ),
-)
-Input.displayName = 'Input'
+  )
+}
 
 export { Input }
 export default Input
