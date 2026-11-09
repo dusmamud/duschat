@@ -137,16 +137,19 @@ export default function ImageLightbox({ url, fileName, onClose }: ImageLightboxP
         </div>
       </div>
 
-      <div
-        className="animate-panel-in flex min-h-0 flex-1 items-center justify-center overflow-auto overscroll-contain p-3"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="animate-panel-in flex min-h-0 flex-1 items-center justify-center overflow-auto overscroll-contain p-3">
         <img
           src={url}
           alt={fileName}
           style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}
           className={`img-edge max-h-full max-w-full object-contain transition-transform duration-200 ease-smooth ${scale === 1 ? 'cursor-zoom-in' : 'cursor-zoom-out'}`}
-          onClick={() => setScale((s) => (s === 1 ? 2 : 1))}
+          onClick={(e) => {
+            // The image keeps its zoom toggle and must not close the
+            // lightbox — only clicks on the empty area around it (which
+            // bubble up to the overlay) close it.
+            e.stopPropagation()
+            setScale((s) => (s === 1 ? 2 : 1))
+          }}
         />
       </div>
 
@@ -155,7 +158,7 @@ export default function ImageLightbox({ url, fileName, onClose }: ImageLightboxP
           ? 'Copied to clipboard'
           : copyFailed
             ? 'Copy failed — try downloading instead'
-            : 'Tap the image to toggle zoom — scroll to pan when zoomed'}
+            : 'Tap outside the image to close — tap the image to toggle zoom — scroll to pan when zoomed'}
       </p>
     </div>
   )
