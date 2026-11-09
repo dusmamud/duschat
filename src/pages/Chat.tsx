@@ -307,7 +307,7 @@ export default function Chat() {
                 className="min-w-0 flex-1 bg-transparent py-2.5 text-sm text-ink placeholder:text-ink-3 focus:outline-none"
               />
               {searchQuery && (
-                <span className="shrink-0 font-mono text-xs tabular-nums text-ink-3">
+                <span className="relative z-10 shrink-0 bg-card font-mono text-xs tabular-nums text-ink-3">
                   {searchMatches.length} match{searchMatches.length === 1 ? '' : 'es'}
                 </span>
               )}
