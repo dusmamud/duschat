@@ -50,6 +50,9 @@ export default function MessageInput({
   const [editorOpen, setEditorOpen] = useState(false)
   const [passwordGenOpen, setPasswordGenOpen] = useState(false)
   const [pasteError, setPasteError] = useState<string | null>(null)
+  // Counts sends so the Send icon can replay its pop on every send
+  // (the icon remounts on a key change, restarting the animation).
+  const [sendTick, setSendTick] = useState(0)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const imageInputRef = useRef<HTMLInputElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -117,6 +120,7 @@ export default function MessageInput({
   const send = () => {
     const text = value.trim()
     if (!text && !stagedFile) return
+    setSendTick((t) => t + 1)
     if (stagedFile) {
       onSendFile(text, stagedFile)
     } else if (codeMode) {
@@ -195,9 +199,12 @@ export default function MessageInput({
   const canSend = Boolean(value.trim() || stagedFile)
 
   return (
-    <div className="px-4 pt-2 pb-[max(12px,env(safe-area-inset-bottom))]">
+    // Floating composer card — it lifts off the page instead of sitting
+    // flush on the bottom edge, so the composer reads as its own surface.
+    // Focus warms the border amber, so tapping in is a visible state.
+    <div className="mx-4 mt-2 mb-[max(12px,env(safe-area-inset-bottom))] rounded-2xl border border-line bg-card px-3 pt-2 pb-3 shadow-panel transition-[border-color] duration-200 ease-smooth focus-within:border-amber/40">
       {replyTarget && (
-        <div className="mb-2 flex items-center gap-2 rounded-lg border border-line bg-card px-3 py-2">
+        <div className="animate-panel-in mb-2 flex items-center gap-2 rounded-lg border border-line bg-raised px-3 py-2">
           <div className="min-w-0 flex-1">
             <p className="text-xs font-medium text-ink">Replying to {replyTarget.senderName}</p>
             <p className="truncate text-xs text-ink-3">{replyTarget.content || replyTarget.file_name || 'Attachment'}</p>
@@ -209,13 +216,13 @@ export default function MessageInput({
       )}
 
       {stagedFile && (
-        <div className="mb-2 flex items-center gap-2 rounded-lg border border-line bg-card px-2.5 py-2">
+        <div className="animate-panel-in mb-2 flex items-center gap-2 rounded-lg border border-line bg-raised px-2.5 py-2">
           {stagedPreview ? (
             <button
               type="button"
               onClick={() => setEditorOpen(true)}
               aria-label="Edit image"
-              className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md"
+              className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md"
             >
               <img src={stagedPreview} alt="" className="img-edge h-full w-full object-cover" />
               <span className="absolute inset-0 flex items-center justify-center bg-deep/40 opacity-0 transition-opacity hover:opacity-100">
@@ -223,7 +230,7 @@ export default function MessageInput({
               </span>
             </button>
           ) : (
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-deep">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-deep">
               <FileText className="h-[18px] w-[18px] text-ink-2" />
             </span>
           )}
@@ -275,7 +282,7 @@ export default function MessageInput({
             }}
             disabled={attachDisabled}
             aria-label="Send image"
-            className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink disabled:opacity-40"
+            className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-[background-color,transform] hover:bg-raised hover:text-ink active:scale-[0.98] disabled:opacity-40"
           >
             <ImagePlus className="h-[18px] w-[18px]" />
           </button>
@@ -284,7 +291,7 @@ export default function MessageInput({
             onClick={() => fileInputRef.current?.click()}
             disabled={attachDisabled}
             aria-label="Attach any file"
-            className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink disabled:opacity-40"
+            className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-[background-color,transform] hover:bg-raised hover:text-ink active:scale-[0.98] disabled:opacity-40"
           >
             <Paperclip className="h-[18px] w-[18px]" />
           </button>
@@ -294,7 +301,7 @@ export default function MessageInput({
             disabled={attachDisabled || stagedFile !== null}
             aria-label="Code mode"
             aria-pressed={codeMode}
-            className={`flex h-10 w-10 items-center justify-center rounded-[10px] transition-colors disabled:opacity-40 ${
+            className={`flex h-10 w-10 items-center justify-center rounded-[10px] transition-[background-color,transform] active:scale-[0.98] disabled:opacity-40 ${
               codeMode ? 'bg-raised text-amber ring-1 ring-amber/40' : 'text-ink-2 hover:bg-raised hover:text-ink'
             }`}
           >
@@ -305,7 +312,7 @@ export default function MessageInput({
             onClick={() => void handlePasteClick()}
             disabled={attachDisabled}
             aria-label="Paste from clipboard"
-            className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink disabled:opacity-40"
+            className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-[background-color,transform] hover:bg-raised hover:text-ink active:scale-[0.98] disabled:opacity-40"
           >
             <ClipboardPaste className="h-[18px] w-[18px]" />
           </button>
@@ -313,11 +320,14 @@ export default function MessageInput({
             type="button"
             onClick={() => setPasswordGenOpen(true)}
             aria-label="Generate password"
-            className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-raised hover:text-ink"
+            className="flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-2 transition-[background-color,transform] hover:bg-raised hover:text-ink active:scale-[0.98]"
           >
             <KeyRound className="h-[18px] w-[18px]" />
           </button>
         </div>
+
+        {/* Desktop divider between the tools and the text box. */}
+        <span className="hidden w-px self-stretch bg-line sm:block" aria-hidden />
 
         <div className="flex min-w-0 flex-1 items-end gap-2">
           <textarea
@@ -347,9 +357,11 @@ export default function MessageInput({
             onClick={send}
             disabled={!canSend}
             aria-label="Send message"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-ink text-page transition-[background-color,transform] hover:bg-white active:scale-[0.98] disabled:opacity-30"
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] transition-[background-color,transform] active:scale-[0.98] ${
+              canSend ? 'bg-amber text-amber-ink hover:bg-amber/90' : 'bg-raised text-ink-3'
+            }`}
           >
-            <Send className="h-[18px] w-[18px]" />
+            <Send key={sendTick} className={`h-[18px] w-[18px] ${sendTick > 0 ? 'animate-send-pop' : ''}`} />
           </button>
         </div>
       </div>

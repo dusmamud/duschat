@@ -94,10 +94,11 @@ mark {
 }
 .flash-message { animation: flash-surface 2s var(--ease-smooth); }
 
-/* Typing indicator dots — live, so a small bounce is fine. */
+/* Typing indicator dots — live, so a small bounce is fine. The dots
+   grow as they rise, so the typing state reads at a glance. */
 @keyframes typing-bounce {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-  30% { transform: translateY(-3px); opacity: 1; }
+  0%, 60%, 100% { transform: translateY(0) scale(1); opacity: 0.4; }
+  30% { transform: translateY(-4px) scale(1.2); opacity: 1; }
 }
 .typing-dot { animation: typing-bounce 1.2s infinite ease-in-out; }
 .typing-dot:nth-child(2) { animation-delay: 0.15s; }
@@ -121,6 +122,25 @@ mark {
 }
 .animate-message-in { animation: message-in 220ms var(--ease-smooth) both; }
 
+/* Send pop — the Send icon jumps once when a message goes out, so
+   tapping Send feels like something happened instead of the button
+   just going quiet. It ends back at identity, so there is no snap. */
+@keyframes send-pop {
+  0% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-3px) scale(1.2); }
+  100% { transform: translateY(0) scale(1); }
+}
+.animate-send-pop { animation: send-pop 300ms var(--ease-smooth) both; }
+
+/* "New messages" pill entrance — it is centred with translateX(-50%),
+   so its own keyframe keeps the -50% or the pill would jump sideways
+   when the animation ends. */
+@keyframes pill-in {
+  from { opacity: 0; transform: translate(-50%, 8px) scale(0.98); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+.animate-pill-in { animation: pill-in 220ms var(--ease-smooth) both; }
+
 /* Overlay entrance — the backdrop fades while the panel rises and
    settles. Used by the lightbox, .txt viewer and settings sheet, so a
    tap opens them instantly yet calmly instead of flashing in. The
@@ -142,6 +162,8 @@ mark {
   .animate-message-in { animation: none; }
   .animate-overlay-in { animation: none; }
   .animate-panel-in { animation: none; }
+  .animate-send-pop { animation: none; }
+  .animate-pill-in { animation: none; }
   .flash-message { animation: none; }
   .typing-dot { animation: none; }
   .upload-bar { animation: none; }

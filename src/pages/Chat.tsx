@@ -490,21 +490,21 @@ export default function Chat() {
         <div className="flex items-center gap-2 border-t border-line bg-page px-4 py-2 text-xs text-ink-2" aria-live="polite">
           <div className="mx-auto flex w-full max-w-3xl items-center gap-2">
             <span className="flex gap-1" aria-hidden>
-              <span className="typing-dot h-1.5 w-1.5 rounded-full bg-amber" />
-              <span className="typing-dot h-1.5 w-1.5 rounded-full bg-amber" />
-              <span className="typing-dot h-1.5 w-1.5 rounded-full bg-amber" />
+              <span className="typing-dot h-2 w-2 rounded-full bg-amber" />
+              <span className="typing-dot h-2 w-2 rounded-full bg-amber" />
+              <span className="typing-dot h-2 w-2 rounded-full bg-amber" />
             </span>
             {typingName} is typing
           </div>
         </div>
       )}
 
-      <div className="relative border-t border-line bg-page">
+      <div className="relative bg-page">
         {showNewMessages && (
           <button
             type="button"
             onClick={jumpToBottom}
-            className="absolute -top-12 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-lg bg-ink px-4 py-1.5 text-xs font-medium whitespace-nowrap text-page shadow-panel transition-colors hover:bg-white"
+            className="animate-pill-in absolute -top-12 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-lg bg-ink px-4 py-1.5 text-xs font-medium whitespace-nowrap text-page shadow-panel transition-colors hover:bg-white"
           >
             <ArrowDown className="h-4 w-4" aria-hidden />
             New messages
