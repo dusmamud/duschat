@@ -171,6 +171,15 @@ export async function uploadImage(file: File, userId: string): Promise<UploadedI
     maxSizeMB: 0.8,
     maxWidthOrHeight: 1600,
     useWebWorker: true,
+    // The worker runs the library via importScripts, and the library's
+    // default libURL is the jsdelivr CDN — blocked by our CSP (script-src
+    // 'self') and an external dependency we don't want. Point it at our
+    // own copy instead: public/vendor/browser-image-compression.js is
+    // the v2.0.2 UMD build copied from node_modules (same version as
+    // package.json — refresh the copy if the package is ever upgraded).
+    // Without this the worker fails and every send silently falls back
+    // to main-thread compression (works, but blocks the UI).
+    libURL: '/vendor/browser-image-compression.js',
   })
   const path = `${userId}/${crypto.randomUUID()}.jpg`
   const { error } = await supabase.storage.from(BUCKET).upload(path, compressed, {
