@@ -46,7 +46,7 @@ export default function Login({ onSwitchToSignup, onDone }: LoginProps) {
       await signIn(values.username, values.password)
       onDone?.()
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Login failed. Please try again.')
+      setFormError(err instanceof Error ? err.message : 'Login failed — please try again')
     }
   }
 

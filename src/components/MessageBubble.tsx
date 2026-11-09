@@ -106,7 +106,7 @@ function MessageBubble({
       setCopied(true)
       window.setTimeout(() => setCopied(false), 1500)
     } catch {
-      onActionError('Could not copy — please copy manually.')
+      onActionError('Could not copy — please copy manually')
     }
   }
 
@@ -122,7 +122,7 @@ function MessageBubble({
       await onEdit(message.id, text)
       setEditing(false)
     } catch {
-      onActionError('Could not save your edit. Try again.')
+      onActionError('Could not save your edit — try again')
     } finally {
       setSaving(false)
     }
@@ -133,7 +133,7 @@ function MessageBubble({
     try {
       await onDelete(message)
     } catch {
-      onActionError('Could not delete this message. Try again.')
+      onActionError('Could not delete this message — try again')
       setDeleting(false)
       setConfirmingDelete(false)
     }
@@ -158,9 +158,9 @@ function MessageBubble({
     >
       <div className={`flex max-w-[85%] flex-col sm:max-w-[75%] ${isMine ? 'items-end' : 'items-start'}`}>
         {showHeader && (
-          <span className="mb-1 flex items-center gap-1.5 px-1 font-mono text-[11px] text-ink-3">
+          <span className="mb-1 flex items-center gap-1.5 px-1 font-mono text-xs text-ink-3">
             {!isMine && (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-raised text-[9px] font-medium text-ink-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-raised text-xs font-medium text-ink-2">
                 {initial}
               </span>
             )}
@@ -333,18 +333,18 @@ function MessageBubble({
             type="button"
             onClick={() => void handleCopy()}
             aria-label={copied ? 'Copied' : 'Copy message'}
-            className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] text-ink-3 transition-colors hover:bg-raised hover:text-ink"
+            className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-ink-3 transition-colors hover:bg-raised hover:text-ink"
           >
-            {copied ? <Check className="h-3.5 w-3.5 text-ok" /> : <Copy className="h-3.5 w-3.5" />}
+            {copied ? <Check className="h-4 w-4 text-ok" /> : <Copy className="h-4 w-4" />}
             {copied ? 'Copied' : 'Copy'}
           </button>
           <button
             type="button"
             onClick={() => onReply(message)}
             aria-label="Reply to message"
-            className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] text-ink-3 transition-colors hover:bg-raised hover:text-ink"
+            className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-ink-3 transition-colors hover:bg-raised hover:text-ink"
           >
-            <Reply className="h-3.5 w-3.5" />
+            <Reply className="h-4 w-4" />
             Reply
           </button>
           {canEdit && (
@@ -355,15 +355,15 @@ function MessageBubble({
                 setEditing(true)
               }}
               aria-label="Edit message"
-              className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] text-ink-3 transition-colors hover:bg-raised hover:text-ink"
+              className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-ink-3 transition-colors hover:bg-raised hover:text-ink"
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <Pencil className="h-4 w-4" />
               Edit
             </button>
           )}
           {isMine && !message.pending && (
             confirmingDelete ? (
-              <span className="flex min-h-8 items-center gap-1 rounded-md bg-danger-soft px-1.5 py-1 text-[11px] text-danger">
+              <span className="flex min-h-8 items-center gap-1 rounded-md bg-danger-soft px-1.5 py-1 text-xs text-danger">
                 Delete?
                 <button
                   type="button"
@@ -380,7 +380,7 @@ function MessageBubble({
                   aria-label="Cancel delete"
                   className="rounded p-0.5 transition-colors hover:bg-danger/20 disabled:opacity-50"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-4 w-4" />
                 </button>
               </span>
             ) : (
@@ -388,9 +388,9 @@ function MessageBubble({
                 type="button"
                 onClick={() => setConfirmingDelete(true)}
                 aria-label="Delete message"
-                className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] text-ink-3 transition-colors hover:bg-danger-soft hover:text-danger"
+                className="flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-ink-3 transition-colors hover:bg-danger-soft hover:text-danger"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-4 w-4" />
                 Delete
               </button>
             )

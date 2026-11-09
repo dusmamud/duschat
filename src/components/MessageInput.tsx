@@ -226,7 +226,7 @@ export default function MessageInput({
           )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-medium text-ink">{stagedFile.name}</p>
-            <p className="text-[11px] text-ink-3">
+            <p className="text-xs text-ink-3">
               {formatFileSize(stagedFile.size)}
               {stagedPreview ? ' · Tap the image to edit' : ' · Sends when you press send'}
             </p>
@@ -341,7 +341,7 @@ export default function MessageInput({
             onClick={send}
             disabled={!canSend}
             aria-label="Send message"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-ink text-page transition-all hover:bg-white active:scale-90 disabled:opacity-30"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-ink text-page transition-[background-color,transform] hover:bg-white active:scale-[0.98] disabled:opacity-30"
           >
             <Send className="h-[18px] w-[18px]" />
           </button>

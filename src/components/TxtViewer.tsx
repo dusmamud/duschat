@@ -57,14 +57,14 @@ export default function TxtViewer({ message, onClose, onCopyError }: TxtViewerPr
       setTruncated(false)
       setCopied(false)
       try {
-        if (!message.file_url) throw new Error('No file attached to this message.')
+        if (!message.file_url) throw new Error('No file attached to this message')
         const { text: raw, truncated: wasTruncated } = await getTxtContent(message.file_url)
         if (cancelled) return
         setText(raw)
         setTruncated(wasTruncated)
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Could not load file.')
+          setError(err instanceof Error ? err.message : 'Could not load file')
         }
       } finally {
         if (!cancelled) setLoading(false)

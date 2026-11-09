@@ -78,7 +78,7 @@ mark {
   0% { background-color: rgba(232, 163, 61, 0.14); }
   100% { background-color: transparent; }
 }
-.flash-message { animation: flash-surface 2s ease-out; }
+.flash-message { animation: flash-surface 2s var(--ease-smooth); }
 
 /* Typing indicator dots — live, so a small bounce is fine. */
 @keyframes typing-bounce {
@@ -120,7 +120,7 @@ mark {
   from { opacity: 0; transform: translateY(10px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
-.animate-overlay-in { animation: overlay-in 180ms ease-out both; }
+.animate-overlay-in { animation: overlay-in 180ms var(--ease-smooth) both; }
 .animate-panel-in { animation: panel-in 220ms var(--ease-smooth) both; }
 
 /* Motion-sensitive users get no entrance animation at all. */

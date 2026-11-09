@@ -55,7 +55,7 @@ export default function Signup({ onSwitchToLogin, onDone }: SignupProps) {
       await signUp(values)
       onDone?.()
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Sign up failed. Please try again.')
+      setFormError(err instanceof Error ? err.message : 'Sign up failed — please try again')
     }
   }
 

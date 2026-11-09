@@ -32,7 +32,7 @@ export default function CodeBlock({ code, language = 'text' }: CodeBlockProps) {
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-deep">
       <div className="flex items-center justify-between border-b border-line px-3 py-1.5">
-        <span className="font-mono text-[11px] text-ink-3">
+        <span className="font-mono text-xs text-ink-3">
           {language === 'text' ? 'Code' : language}
         </span>
         <button
@@ -45,12 +45,12 @@ export default function CodeBlock({ code, language = 'text' }: CodeBlockProps) {
             <span className="text-danger">Copy failed</span>
           ) : copied ? (
             <>
-              <Check className="h-3.5 w-3.5 text-ok" />
+              <Check className="h-4 w-4 text-ok" />
               <span className="text-ok">Copied</span>
             </>
           ) : (
             <>
-              <Copy className="h-3.5 w-3.5" />
+              <Copy className="h-4 w-4" />
               <span>Copy</span>
             </>
           )}

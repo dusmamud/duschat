@@ -237,7 +237,7 @@ export default function Chat() {
     } catch (err) {
       cancelPendingFile(tempId)
       lastFailedFileRef.current = file
-      setUploadError(err instanceof Error ? err.message : 'Could not send file.')
+      setUploadError(err instanceof Error ? err.message : 'Could not send file')
     } finally {
       setUploading(null)
     }
@@ -322,13 +322,13 @@ export default function Chat() {
 
       {!isOnline && (
         <div className="flex items-center justify-center gap-2 border-b border-amber/25 bg-amber/10 px-4 py-2 text-xs text-amber">
-          <WifiOff className="h-3.5 w-3.5 shrink-0" />
+          <WifiOff className="h-4 w-4 shrink-0" />
           You&apos;re offline — messages can&apos;t send right now
         </div>
       )}
       {isOnline && !channelConnected && !loading && (
         <div className="flex items-center justify-center gap-2 border-b border-line bg-card px-4 py-1.5 text-xs text-ink-3">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          <Loader2 className="h-4 w-4 animate-spin" />
           Reconnecting
         </div>
       )}
@@ -363,7 +363,7 @@ export default function Chat() {
                     onClick={() => jumpToMessage(m.id)}
                     className="rounded-xl border border-line bg-card px-3.5 py-3 text-left transition-colors hover:border-line-strong hover:bg-raised"
                   >
-                    <span className="mb-1 block font-mono text-[11px] text-ink-3">
+                    <span className="mb-1 block font-mono text-xs text-ink-3">
                       {m.sender_id === user.id ? 'You' : (m.sender?.name ?? m.sender?.username ?? 'Unknown')}
                       {' · '}
                       {formatSearchDate(new Date(m.created_at))}
@@ -380,7 +380,7 @@ export default function Chat() {
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
               <img src="/logo.png" alt="Dus Chat mark" className="h-16 w-16" />
-              <span className="flex gap-1.5" aria-hidden>
+              <span className="flex gap-1" aria-hidden>
                 <span className="h-2 w-2 rounded-full bg-amber" />
                 <span className="h-2 w-2 rounded-full bg-amber" />
               </span>
@@ -402,7 +402,7 @@ export default function Chat() {
                 row.kind === 'separator' ? (
                   <div key={row.key} className="my-4 flex items-center gap-3">
                     <span className="h-px flex-1 bg-line" />
-                    <span className="font-mono text-[11px] text-ink-3">{row.label}</span>
+                    <span className="font-mono text-xs text-ink-3">{row.label}</span>
                     <span className="h-px flex-1 bg-line" />
                   </div>
                 ) : (
@@ -458,7 +458,7 @@ export default function Chat() {
       {uploading && (
         <div className="border-t border-line px-4 py-2.5">
           <div className="mx-auto flex w-full max-w-3xl items-center gap-2 text-xs text-ink-2">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
             <span className="min-w-0 flex-1 truncate">
               Uploading {uploading.fileName}
             </span>

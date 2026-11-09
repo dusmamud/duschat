@@ -28,7 +28,7 @@ export default function SettingsMenu({ onDeleteAll, onLogout, onClose }: Setting
       await onDeleteAll()
       onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not delete chats. Try again.')
+      setError(err instanceof Error ? err.message : 'Could not delete chats — try again')
       setDeleting(false)
     }
   }

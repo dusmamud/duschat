@@ -107,12 +107,12 @@ export default function PasswordGenerator({ onClose, onSend }: PasswordGenerator
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber/15">
             <KeyRound className="h-4 w-4 text-amber" />
           </span>
-          <h2 className="flex-1 text-sm font-semibold text-ink">Password Generator</h2>
+          <h2 className="flex-1 text-sm font-medium text-ink">Password Generator</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close password generator"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-raised hover:text-ink"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-raised hover:text-ink"
           >
             <X className="h-4 w-4" />
           </button>
@@ -162,7 +162,7 @@ export default function PasswordGenerator({ onClose, onSend }: PasswordGenerator
               className="w-full accent-amber"
               aria-label="Password length"
             />
-            <div className="flex justify-between text-[11px] text-ink-3">
+            <div className="flex justify-between text-xs text-ink-3">
               <span>{MIN_PASSWORD_LENGTH}</span>
               <span>{MAX_PASSWORD_LENGTH}</span>
             </div>
@@ -189,7 +189,7 @@ export default function PasswordGenerator({ onClose, onSend }: PasswordGenerator
                         on ? 'border-amber bg-amber text-deep' : 'border-line bg-raised text-transparent'
                       }`}
                     >
-                      <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                      <Check className="h-4 w-4" strokeWidth={3} />
                     </span>
                     <span className="flex-1 text-sm text-ink">{row.label}</span>
                     <span className="font-mono text-xs text-ink-3">{row.example}</span>
@@ -209,7 +209,7 @@ export default function PasswordGenerator({ onClose, onSend }: PasswordGenerator
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-raised">
               <div
-                className={`h-full rounded-full transition-all ${STRENGTH_STYLE[strength.level].bar}`}
+                className={`h-full rounded-full ${STRENGTH_STYLE[strength.level].bar}`}
                 style={{ width: `${Math.min(100, Math.round((strength.bits / 100) * 100))}%` }}
               />
             </div>
@@ -230,14 +230,14 @@ export default function PasswordGenerator({ onClose, onSend }: PasswordGenerator
               type="button"
               onClick={() => onSend(password)}
               disabled={!password}
-              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-[10px] bg-ink text-sm font-medium text-page transition-all hover:bg-white active:scale-[0.98] disabled:opacity-30"
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-[10px] bg-ink text-sm font-medium text-page transition-[background-color,transform] hover:bg-white active:scale-[0.98] disabled:opacity-30"
             >
               <Send className="h-4 w-4" />
               Send
             </button>
           </div>
-          <p className="text-center text-[11px] leading-relaxed text-ink-3">
-            Generated on this device with secure randomness — nothing leaves the app until you send or copy it.
+          <p className="text-center text-xs leading-relaxed text-ink-3">
+            Generated on this device with secure randomness — nothing leaves the app until you send or copy it
           </p>
         </div>
       </div>

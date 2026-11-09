@@ -23,7 +23,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               <p className="text-lg leading-tight font-medium text-ink">Dus Chat</p>
               <p className="mt-1 text-sm text-ink-2">Private chat for two</p>
               <span className="mt-3 hidden items-center gap-2 md:flex" aria-hidden>
-                <span className="flex gap-1.5">
+                <span className="flex gap-1">
                   <span className="h-2 w-2 rounded-full bg-amber" />
                   <span className="h-2 w-2 rounded-full bg-amber" />
                 </span>
