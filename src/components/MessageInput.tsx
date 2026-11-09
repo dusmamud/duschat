@@ -12,7 +12,7 @@ interface MessageInputProps {
   onSendCode: (code: string) => void
   /** Send a staged file with the typed text as its caption (may be empty). */
   onSendFile: (text: string, file: File) => void
-  onTyping: () => void
+  onTyping: (hasText: boolean) => void
   replyTarget: ReplyTarget | null
   onCancelReply: () => void
   /** Upload in progress — only the attach buttons lock; typing stays on. */
@@ -314,7 +314,8 @@ export default function MessageInput({
             onChange={(e) => {
               setValue(e.target.value)
               resize()
-              onTyping()
+              // Empty composer means not typing — the bubble clears at once.
+              onTyping(e.target.value.length > 0)
             }}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}

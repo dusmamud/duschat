@@ -37,7 +37,7 @@ export interface UseMessagesResult {
     data: { type: 'image' | 'file'; path: string; fileName: string; fileSize: number; caption?: string },
   ) => Promise<void>
   cancelPendingFile: (tempId: string) => void
-  notifyTyping: () => void
+  notifyTyping: (hasText?: boolean) => void
   stopTyping: () => void
   typingName: string | null
   /** null = presence not seen yet; once seen, keeps the last-known value on disconnect. */
@@ -83,6 +83,7 @@ export function useMessages(): UseMessagesResult {
   const hasMoreRef = useRef(true)
   hasMoreRef.current = hasMore
   const typingTimerRef = useRef<number | null>(null)
+  const typingHeartbeatRef = useRef<number | null>(null)
   const typingSentRef = useRef(false)
   const typingClearRef = useRef<number | null>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
@@ -259,12 +260,22 @@ export function useMessages(): UseMessagesResult {
 
   // Single Realtime channel 'dus-chat': postgres_changes (INSERT / UPDATE /
   // DELETE), ephemeral broadcast for typing, and presence for online status.
+  // Presence key: the channel MUST be created with config.presence.key set
+  // to our user id. Without it the server keys every connection under a
+  // random UUID, so presenceState() is { "<random-uuid>": [...] } and
+  // checking keys can never tell who is who — the old code read
+  // Object.keys(state) and concluded "someone else is here" from our OWN
+  // presence, so the header said Online even when the other user was
+  // offline. Verified live against the real server (probe channel, two
+  // clients): without the key the state key is a UUID; with the key it is
+  // the user id. The sync handler still checks the metas, not just the
+  // keys, so a user with two tabs (two metas under one key) is handled.
   const myId = sessionUserId ?? user?.id ?? null
   const myName = user?.name ?? user?.username ?? 'Someone'
   useEffect(() => {
     if (!myId) return
     const channel = supabase
-      .channel('dus-chat')
+      .channel('dus-chat', { config: { presence: { key: myId } } })
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
@@ -335,26 +346,42 @@ export function useMessages(): UseMessagesResult {
           setTypingName(p.name ?? 'Someone')
           if (typingClearRef.current) window.clearTimeout(typingClearRef.current)
           // Safety net: clear if the "stopped" broadcast is ever lost.
-          typingClearRef.current = window.setTimeout(() => setTypingName(null), 4000)
+          // 5s because the sender re-broadcasts every 2s while typing,
+          // so a live typist refreshes well before this fires; one lost
+          // packet still cannot leave a stuck bubble.
+          typingClearRef.current = window.setTimeout(() => setTypingName(null), 5000)
         } else {
           setTypingName(null)
         }
       })
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState()
-        // Only two users exist: anyone present who isn't me is the other user.
-        const otherPresent = Object.keys(state).some((key) => key !== myId)
+        // Check the metas, not the keys: each key holds one meta per
+        // connection (a user with two tabs has two metas under one key),
+        // and only the meta's user_id says who is actually there.
+        const otherPresent = Object.values(state).some((metas) =>
+          (metas as { user_id?: string }[]).some((m) => m.user_id !== myId),
+        )
         setOtherOnline(otherPresent)
       })
       .subscribe((status) => {
         setChannelConnected(status === 'SUBSCRIBED')
         if (status === 'SUBSCRIBED') {
-          void channel.track({ user_id: myId, name: myName })
+          void channel.track({ user_id: myId, name: myName, online_at: new Date().toISOString() })
+        } else {
+          // Disconnected: the last-known presence is stale — show
+          // "Checking" instead of a possibly wrong Online, and clear
+          // any typing bubble that can no longer be refreshed.
+          setOtherOnline(null)
+          setTypingName(null)
         }
       })
     channelRef.current = channel
     return () => {
       channelRef.current = null
+      if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current)
+      if (typingHeartbeatRef.current) window.clearInterval(typingHeartbeatRef.current)
+      if (typingClearRef.current) window.clearTimeout(typingClearRef.current)
       void supabase.removeChannel(channel)
     }
   }, [myId, myName, hydrateRows])
@@ -394,27 +421,45 @@ export function useMessages(): UseMessagesResult {
     })
   }, [myId, myName])
 
-  /** Call on every composer keystroke: sends "typing" once, then "stopped"
-   *  after ~2s of idle. Debounced to ~1s between re-sends. */
-  const notifyTyping = useCallback(() => {
-    if (!typingSentRef.current) {
-      typingSentRef.current = true
-      sendTypingBroadcast(true)
-    }
-    if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current)
-    typingTimerRef.current = window.setTimeout(() => {
-      typingSentRef.current = false
-      sendTypingBroadcast(false)
-    }, 2000)
-  }, [sendTypingBroadcast])
-
   const stopTyping = useCallback(() => {
     if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current)
+    if (typingHeartbeatRef.current) window.clearInterval(typingHeartbeatRef.current)
+    typingHeartbeatRef.current = null
     if (typingSentRef.current) {
       typingSentRef.current = false
       sendTypingBroadcast(false)
     }
   }, [sendTypingBroadcast])
+
+  /** Call on every composer keystroke with whether any text is left.
+   *  Sends "typing" once, re-broadcasts it every 2s while the user keeps
+   *  typing, then sends "stopped" after ~2s of idle. The heartbeat is
+   *  the fix for the old behaviour: one "typing" at the start and the
+   *  other side's timeout clearing the bubble after a few seconds even
+   *  though the user was still typing a long message. An empty composer
+   *  means not typing — the bubble clears immediately. */
+  const notifyTyping = useCallback(
+    (hasText = true) => {
+      if (!hasText) {
+        stopTyping()
+        return
+      }
+      if (!typingSentRef.current) {
+        typingSentRef.current = true
+        sendTypingBroadcast(true)
+      }
+      if (typingHeartbeatRef.current) window.clearInterval(typingHeartbeatRef.current)
+      typingHeartbeatRef.current = window.setInterval(() => sendTypingBroadcast(true), 2000)
+      if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current)
+      typingTimerRef.current = window.setTimeout(() => {
+        if (typingHeartbeatRef.current) window.clearInterval(typingHeartbeatRef.current)
+        typingHeartbeatRef.current = null
+        typingSentRef.current = false
+        sendTypingBroadcast(false)
+      }, 2000)
+    },
+    [sendTypingBroadcast, stopTyping],
+  )
 
   // Depends on refs (messagesRef / replyTargetRef), not the messages array,
   // so its identity stays stable across renders (keeps memoised bubbles
