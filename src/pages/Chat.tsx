@@ -126,6 +126,9 @@ export default function Chat() {
   const [flashId, setFlashId] = useState<string | null>(null)
   const [isOnline, setIsOnline] = useState(() => navigator.onLine)
   const lastFailedFileRef = useRef<File | null>(null)
+  // The composer footer (staged file, reply preview, multi-line text)
+  // grows and shrinks; the list is flex-1, so it shrinks with it.
+  const footerRef = useRef<HTMLDivElement | null>(null)
   // When the first page finished loading: only messages created after
   // this moment are genuinely new and get the entrance animation.
   // History (initial load + load-older) never animates.
@@ -148,6 +151,41 @@ export default function Chat() {
       window.removeEventListener('offline', off)
     }
   }, [])
+
+  // Keep the latest message visible when the composer grows (staged file,
+  // reply preview, multi-line text). The footer is in flow, so when it
+  // grows the list shrinks and the bottom message slides below the fold
+  // — the list does not re-scroll on its own. If the user was already
+  // reading the latest messages, pin them to the bottom; if they scrolled
+  // up to read history, leave them alone. The pre-resize distance is
+  // recovered from the height delta: the footer growing by `delta`
+  // shrinks the list by the same amount, so the distance from the bottom
+  // grows by `delta`.
+  useEffect(() => {
+    const footer = footerRef.current
+    const list = listRef.current
+    if (!footer || !list) return
+    let prevHeight: number | null = null
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (!entry) return
+      const height = entry.contentRect.height
+      if (prevHeight === null) {
+        prevHeight = height
+        return
+      }
+      const delta = height - prevHeight
+      prevHeight = height
+      if (delta === 0) return
+      const distanceAfter = list.scrollHeight - list.scrollTop - list.clientHeight
+      const distanceBefore = distanceAfter - delta
+      if (distanceBefore <= 120) {
+        list.scrollTo({ top: list.scrollHeight, behavior: 'auto' })
+      }
+    })
+    ro.observe(footer)
+    return () => ro.disconnect()
+  }, [listRef])
 
   // Warm up the overlay chunks once the chat is open, so the lightbox,
   // .txt viewer, settings and password generator open instantly on first
@@ -499,7 +537,7 @@ export default function Chat() {
         </div>
       )}
 
-      <div className="relative bg-page">
+      <div ref={footerRef} className="relative bg-page">
         {showNewMessages && (
           <button
             type="button"
