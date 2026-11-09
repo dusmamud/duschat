@@ -83,6 +83,25 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 })
 
+// Realtime heartbeat — Supabase's own KB documents "silent disconnections"
+// in backgrounded apps (Nov 2026): the browser throttles main-thread
+// timers, the heartbeat stops going out on time, the server drops the
+// socket, and the app stops receiving events with no error at all. When
+// the heartbeat reports the socket as disconnected, explicitly reconnect
+// — the client's built-in retry does not always recover on its own
+// (supabase-js#1732, discussion #5312). The channel resubscribe + the
+// catch-up refetch in useMessages then bring in anything missed while it
+// was down.
+// (The KB also recommends realtime.worker, but its default worker script
+// is served from realtime.supabase.com, which this app's CSP
+// (worker-src 'self' blob:) would block — the reconnect + refetch here
+// cover the same cases without weakening the CSP.)
+supabase.realtime.onHeartbeat((status) => {
+  if (status === 'disconnected') {
+    supabase.realtime.connect()
+  }
+})
+
 // One-time migration: the previous build stored the session in localStorage
 // under `sb-<project-ref>-auth-token`. Remove that stale key so the old
 // session cannot linger after the switch to cookies. Both users are logged

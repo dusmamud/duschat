@@ -95,6 +95,18 @@ export function useMessages(): UseMessagesResult {
   // Ids already loaded — realtime INSERTs are checked against this before
   // hydrating, so a realtime echo of a REST-fetched row never duplicates.
   const loadedIdsRef = useRef<Set<string>>(new Set())
+  // Catch-up refetch — guards so concurrent triggers (visibility + health
+  // check + resubscribe firing together) never stack REST calls, and so a
+  // burst of triggers refetches at most once per 10s.
+  const refetchingRef = useRef(false)
+  const lastRefetchAtRef = useRef(0)
+  // True once the channel has subscribed at least once — a later SUBSCRIBED
+  // is a rejoin, and only a rejoin needs a catch-up refetch (the first
+  // subscribe is covered by the initial load).
+  const subscribedOnceRef = useRef(false)
+  // Mirrors channelConnected for the health-check interval (which closes
+  // over refs, not state).
+  const channelConnectedRef = useRef(false)
 
   // Profiles come from AuthContext (fetched once there, both rows) — never
   // query the profiles table per message here.
@@ -258,6 +270,73 @@ export function useMessages(): UseMessagesResult {
     return () => observer.disconnect()
   }, [loading, hasMore, loadOlder])
 
+  // Catch-up refetch — re-fetch the newest page and merge it, so messages
+  // sent while the realtime channel was down (or while the tab was
+  // backgrounded) still show up. This is a plain REST query, so it works
+  // even when the socket is dead — which is exactly when it is needed.
+  // Merge rules: fetched rows are the server's current newest page. A
+  // fetched row that is the server version of an optimistic pending
+  // message takes the pending row's clientId (stable React key, same rule
+  // as the INSERT handler); pending rows with no server version yet are
+  // always kept; local rows older than the fetched window are kept (we
+  // only fetched the newest 50); local rows inside the window that the
+  // server no longer returns were deleted while we were away, so they go.
+  // The result is sorted by (created_at, id), the server's ordering, so
+  // a pending message keeps its chronological place.
+  const refetchLatest = useCallback(async () => {
+    const now = Date.now()
+    if (refetchingRef.current || now - lastRefetchAtRef.current < 10_000) return
+    refetchingRef.current = true
+    lastRefetchAtRef.current = now
+    try {
+      const rows = await fetchPage()
+      const hydrated = await hydrateRows(rows)
+      if (hydrated.length === 0) return
+      const oldestFetchedAt = hydrated[0]?.created_at ?? ''
+      const keyOf = (m: Message) =>
+        `${m.sender_id}|${m.type}|${m.type === 'image' || m.type === 'file' ? m.file_name : m.content}`
+      setMessages((prev) => {
+        const fetchedById = new Map(hydrated.map((m) => [m.id, m]))
+        const pendingByKey = new Map<string, Message>()
+        for (const m of prev) {
+          if (m.pending) pendingByKey.set(keyOf(m), m)
+        }
+        const usedPending = new Set<string>()
+        const result: Message[] = []
+        for (const h of hydrated) {
+          const pending = pendingByKey.get(keyOf(h))
+          const local = prev.find((m) => m.id === h.id)
+          if (pending) {
+            result.push({ ...h, clientId: pending.clientId })
+            usedPending.add(keyOf(h))
+          } else if (local) {
+            result.push({ ...h, clientId: local.clientId })
+          } else {
+            result.push(h)
+          }
+        }
+        for (const m of prev) {
+          if (fetchedById.has(m.id)) continue
+          if (m.pending) {
+            if (!usedPending.has(keyOf(m))) result.push(m)
+            continue
+          }
+          if (m.created_at < oldestFetchedAt) result.push(m)
+        }
+        result.sort((a, b) => {
+          const t = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          return t !== 0 ? t : a.id < b.id ? -1 : 1
+        })
+        return result
+      })
+    } catch {
+      // A failed catch-up is not fatal — realtime (when it recovers) and
+      // the next trigger will try again. Do not surface an error banner.
+    } finally {
+      refetchingRef.current = false
+    }
+  }, [fetchPage, hydrateRows])
+
   // Single Realtime channel 'dus-chat': postgres_changes (INSERT / UPDATE /
   // DELETE), ephemeral broadcast for typing, and presence for online status.
   // Presence key: the channel MUST be created with config.presence.key set
@@ -365,9 +444,19 @@ export function useMessages(): UseMessagesResult {
         setOtherOnline(otherPresent)
       })
       .subscribe((status) => {
-        setChannelConnected(status === 'SUBSCRIBED')
-        if (status === 'SUBSCRIBED') {
+        const subscribed = status === 'SUBSCRIBED'
+        setChannelConnected(subscribed)
+        channelConnectedRef.current = subscribed
+        if (subscribed) {
           void channel.track({ user_id: myId, name: myName, online_at: new Date().toISOString() })
+          // Rejoin after a drop: the channel only delivers live events, so
+          // anything sent while it was down is missed — catch up from the
+          // DB. The first subscribe is covered by the initial load, so
+          // only refetch when we have subscribed before.
+          if (subscribedOnceRef.current) {
+            void refetchLatest()
+          }
+          subscribedOnceRef.current = true
         } else {
           // Disconnected: the last-known presence is stale — show
           // "Checking" instead of a possibly wrong Online, and clear
@@ -384,7 +473,54 @@ export function useMessages(): UseMessagesResult {
       if (typingClearRef.current) window.clearTimeout(typingClearRef.current)
       void supabase.removeChannel(channel)
     }
-  }, [myId, myName, hydrateRows])
+  }, [myId, myName, hydrateRows, refetchLatest])
+
+  // Catch up when the user comes back, and keep the connection alive.
+  // Two gaps the channel alone does not cover:
+  // - Backgrounded tab: the browser throttles timers, the socket can drop
+  //   silently, and nothing refetches while the tab is hidden. When the
+  //   tab becomes visible — or the window regains focus after being away
+  //   for a while — make sure the socket is up and refetch. A plain REST
+  //   query, so it works even if the socket is still down.
+  // - Visible tab left open for hours: the socket can drop without any
+  //   visibility change. A 60s health check reads local state only (no
+  //   network when healthy) and reconnects + refetches if the socket or
+  //   the channel is down.
+  useEffect(() => {
+    const catchUp = () => {
+      if (!supabase.realtime.isConnected()) {
+        supabase.realtime.connect()
+      }
+      void refetchLatest()
+    }
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') catchUp()
+    }
+    // Only refetch on focus after a real absence (30s+) — not on every
+    // click back into the window, which would waste REST calls.
+    let lastBlurAt = Date.now()
+    const onBlur = () => {
+      lastBlurAt = Date.now()
+    }
+    const onFocus = () => {
+      if (Date.now() - lastBlurAt > 30_000) catchUp()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('blur', onBlur)
+    window.addEventListener('focus', onFocus)
+    const timer = window.setInterval(() => {
+      if (!supabase.realtime.isConnected() || !channelConnectedRef.current) {
+        supabase.realtime.connect()
+        void refetchLatest()
+      }
+    }, 60_000)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('blur', onBlur)
+      window.removeEventListener('focus', onFocus)
+      window.clearInterval(timer)
+    }
+  }, [refetchLatest])
 
   // Auto-scroll to bottom on new messages ONLY when the user is already
   // near the bottom (or the message is their own). Otherwise show the
