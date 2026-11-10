@@ -1,5 +1,6 @@
 import { lazy, memo, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { Check, CheckCheck, Copy, Download, File, FileText, Pencil, Reply, Trash2, X } from 'lucide-react'
+import Linkify from 'linkify-react'
 import { getSignedFileUrl } from '@/lib/supabase'
 import { formatHHmm } from '@/lib/format'
 import { formatFileSize, isTxtFile, prefetchTxtContent } from '@/lib/files'
@@ -325,7 +326,15 @@ function MessageBubble({
             )
           ) : (
             <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words text-pretty">
-              {highlight(message.content, searchQuery)}
+              <Linkify
+                options={{
+                  target: '_blank',
+                  rel: 'noopener noreferrer',
+                  className: 'text-amber underline underline-offset-2 decoration-amber/40 hover:decoration-amber',
+                }}
+              >
+                {highlight(message.content, searchQuery)}
+              </Linkify>
               {/* Read receipt inside the bubble — green double tick at the
                 end of the text, only once the other user has read it. */}
               {isMine && !message.pending && message.read_at && (
@@ -343,7 +352,15 @@ function MessageBubble({
           {/* Caption typed with a file/image — shows under the media. */}
           {(message.type === 'image' || message.type === 'file') && message.content ? (
             <p className="mt-2 px-1 text-[15px] leading-relaxed whitespace-pre-wrap break-words text-pretty">
-              {highlight(message.content, searchQuery)}
+              <Linkify
+                options={{
+                  target: '_blank',
+                  rel: 'noopener noreferrer',
+                  className: 'text-amber underline underline-offset-2 decoration-amber/40 hover:decoration-amber',
+                }}
+              >
+                {highlight(message.content, searchQuery)}
+              </Linkify>
             </p>
           ) : null}
           {/* Read receipt inside the bubble — for image/file/code messages,

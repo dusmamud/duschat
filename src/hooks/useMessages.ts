@@ -54,6 +54,8 @@ export interface UseMessagesResult {
   /** A new message arrived while the user was scrolled up. */
   showNewMessages: boolean
   jumpToBottom: () => void
+  /** The user has scrolled up to read history (not near the bottom). */
+  isScrolledUp: boolean
 }
 
 export function useMessages(): UseMessagesResult {
@@ -68,6 +70,11 @@ export function useMessages(): UseMessagesResult {
   const [otherOnline, setOtherOnline] = useState<boolean | null>(null)
   const [channelConnected, setChannelConnected] = useState(false)
   const [showNewMessages, setShowNewMessages] = useState(false)
+  // True while the user has scrolled up to read history — drives the
+  // floating "jump to latest" button. (showNewMessages only covers new
+  // arrivals; this covers plain reading of history.)
+  const [isScrolledUp, setIsScrolledUp] = useState(false)
+  const isScrolledUpRef = useRef(false)
   const listRef = useRef<HTMLDivElement | null>(null)
   const topSentinelRef = useRef<HTMLDivElement | null>(null)
   const nearBottomRef = useRef(true)
@@ -185,7 +192,15 @@ export function useMessages(): UseMessagesResult {
     const el = listRef.current
     if (!el) return
     const onScroll = () => {
-      nearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight <= 120
+      const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= 120
+      nearBottomRef.current = nearBottom
+      // Only re-render when the scrolled-up state actually flips — the
+      // scroll event fires constantly while the user is scrolling.
+      const scrolledUp = !nearBottom
+      if (isScrolledUpRef.current !== scrolledUp) {
+        isScrolledUpRef.current = scrolledUp
+        setIsScrolledUp(scrolledUp)
+      }
     }
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
@@ -853,6 +868,7 @@ export function useMessages(): UseMessagesResult {
     loadingMore,
     showNewMessages,
     jumpToBottom,
+    isScrolledUp,
   }
 }
 

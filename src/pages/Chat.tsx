@@ -114,6 +114,7 @@ export default function Chat() {
     loadingMore,
     showNewMessages,
     jumpToBottom,
+    isScrolledUp,
   } = useMessages()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [txtMessage, setTxtMessage] = useState<Message | null>(null)
@@ -546,6 +547,19 @@ export default function Chat() {
           >
             <ArrowDown className="h-4 w-4" aria-hidden />
             New messages
+          </button>
+        )}
+        {/* Jump to latest — while reading history, a floating button to get
+          back to the bottom. Hidden when the "New messages" pill is showing
+          (it does the same jump), so the two never overlap. */}
+        {isScrolledUp && !showNewMessages && (
+          <button
+            type="button"
+            onClick={jumpToBottom}
+            aria-label="Jump to latest messages"
+            className="animate-pill-in absolute -top-14 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-ink text-page shadow-panel transition-colors hover:bg-white"
+          >
+            <ArrowDown className="h-5 w-5" aria-hidden />
           </button>
         )}
         <div className="mx-auto w-full max-w-3xl">

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent, type RefObject } from 'react'
-import { ClipboardPaste, Code2, FileText, ImagePlus, KeyRound, Loader2, Paperclip, Pencil, Send, X } from 'lucide-react'
+import { ClipboardPaste, Code2, FileText, ImagePlus, KeyRound, Loader2, Paperclip, Pencil, Send, Smile, X } from 'lucide-react'
 import { formatFileSize, isImageFile } from '@/lib/files'
 import type { ReplyTarget } from '@/lib/types'
 
@@ -9,6 +9,9 @@ const ImageEditor = lazy(() => import('./ImageEditor'))
 // The password generator is small, but it is still an overlay chunk — it
 // loads on first open (and warms up with the other overlays in Chat.tsx).
 const PasswordGenerator = lazy(() => import('./PasswordGenerator'))
+// The emoji picker (emoji-picker-react) is heavy — it loads only when the
+// user opens it, never in the initial bundle.
+const EmojiPickerPanel = lazy(() => import('./EmojiPickerPanel'))
 
 interface MessageInputProps {
   /** Name of the other person, for the composer placeholder ("Message Kum…"). */
@@ -49,6 +52,7 @@ export default function MessageInput({
   const [stagedPreview, setStagedPreview] = useState<string | null>(null)
   const [editorOpen, setEditorOpen] = useState(false)
   const [passwordGenOpen, setPasswordGenOpen] = useState(false)
+  const [emojiOpen, setEmojiOpen] = useState(false)
   const [pasteError, setPasteError] = useState<string | null>(null)
   // Counts sends so the Send icon can replay its pop on every send
   // (the icon remounts on a key change, restarting the animation).
@@ -141,6 +145,7 @@ export default function MessageInput({
     setValue('')
     setCodeMode(false)
     clearStaged()
+    setEmojiOpen(false)
     // Keep the composer focused so the user can keep typing without
     // tapping the box again (clicking Send moves focus to the button).
     textareaRef.current?.focus()
@@ -197,6 +202,29 @@ export default function MessageInput({
     requestAnimationFrame(resize)
   }
 
+  /** Insert an emoji from the picker at the cursor (not just appended) —
+   *  the standard chat behaviour. The picker stays open so the user can
+   *  add several in a row; it closes via the Smile button, a tap outside,
+   *  or sending. */
+  const insertEmoji = (emoji: string) => {
+    const el = textareaRef.current
+    if (!el) {
+      setValue((prev) => prev + emoji)
+      return
+    }
+    const start = el.selectionStart ?? value.length
+    const end = el.selectionEnd ?? value.length
+    const next = value.slice(0, start) + emoji + value.slice(end)
+    setValue(next)
+    onTyping(next.length > 0)
+    requestAnimationFrame(() => {
+      el.focus()
+      const pos = start + emoji.length
+      el.setSelectionRange(pos, pos)
+      resize()
+    })
+  }
+
   /** Ctrl+V / Cmd+V in the composer: a pasted image is staged, text pastes normally. */
   const handlePaste = (e: ClipboardEvent<HTMLTextAreaElement>) => {
     const files = e.clipboardData?.files
@@ -212,7 +240,7 @@ export default function MessageInput({
     // Floating composer card — it lifts off the page instead of sitting
     // flush on the bottom edge, so the composer reads as its own surface.
     // Focus warms the border amber, so tapping in is a visible state.
-    <div className="mx-4 mt-2 mb-[max(12px,env(safe-area-inset-bottom))] rounded-2xl border border-line bg-card px-3 pt-2 pb-3 shadow-panel transition-[border-color] duration-200 ease-smooth focus-within:border-amber/40">
+    <div className="relative mx-4 mt-2 mb-[max(12px,env(safe-area-inset-bottom))] rounded-2xl border border-line bg-card px-3 pt-2 pb-3 shadow-panel transition-[border-color] duration-200 ease-smooth focus-within:border-amber/40">
       {replyTarget && (
         <div className="animate-panel-in mb-2 flex items-center gap-2 rounded-lg border border-line bg-raised px-3 py-2">
           <div className="min-w-0 flex-1">
@@ -334,6 +362,18 @@ export default function MessageInput({
           >
             <KeyRound className="h-[18px] w-[18px]" />
           </button>
+          <button
+            type="button"
+            onClick={() => setEmojiOpen((v) => !v)}
+            disabled={attachDisabled}
+            aria-label="Add emoji"
+            aria-expanded={emojiOpen}
+            className={`flex h-10 w-10 items-center justify-center rounded-[10px] transition-[background-color,transform] active:scale-[0.98] disabled:opacity-40 ${
+              emojiOpen ? 'bg-raised text-amber ring-1 ring-amber/40' : 'text-ink-2 hover:bg-raised hover:text-ink'
+            }`}
+          >
+            <Smile className="h-[18px] w-[18px]" />
+          </button>
         </div>
 
         {/* Desktop divider between the tools and the text box. */}
@@ -415,6 +455,29 @@ export default function MessageInput({
             onError={(msg) => showPasteError(msg)}
           />
         </Suspense>
+      )}
+
+      {emojiOpen && (
+        <>
+          {/* Tap outside to close the picker. */}
+          <button
+            type="button"
+            aria-label="Close emoji picker"
+            onClick={() => setEmojiOpen(false)}
+            className="fixed inset-0 z-40 cursor-default"
+          />
+          <div className="absolute bottom-full left-0 z-50 mb-2 w-[min(350px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-line bg-card shadow-panel">
+            <Suspense
+              fallback={
+                <div className="flex h-[380px] items-center justify-center" role="status" aria-label="Loading emoji picker">
+                  <Loader2 className="h-6 w-6 animate-spin text-ink-3" />
+                </div>
+              }
+            >
+              <EmojiPickerPanel onSelect={insertEmoji} />
+            </Suspense>
+          </div>
+        </>
       )}
     </div>
   )
