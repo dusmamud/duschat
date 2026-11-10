@@ -62,6 +62,8 @@ export default function MessageInput({
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const pasteErrorTimerRef = useRef<number | null>(null)
   const resizeRafRef = useRef<number | null>(null)
+  const emojiPanelRef = useRef<HTMLDivElement | null>(null)
+  const emojiButtonRef = useRef<HTMLButtonElement | null>(null)
 
   // Revoke the staged image preview URL when it is replaced or on unmount.
   useEffect(() => {
@@ -79,6 +81,23 @@ export default function MessageInput({
       textareaRef.current?.focus()
     }
   }, [replyTarget])
+
+  // Close the emoji picker on a tap outside it. Done with a document
+  // listener (not a backdrop): a backdrop would sit over the composer and
+  // swallow the first tap on Send, so the user would have to tap Send
+  // twice. Clicks on the panel itself or the Smile button are ignored.
+  useEffect(() => {
+    if (!emojiOpen) return
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node | null
+      if (!t) return
+      if (emojiPanelRef.current?.contains(t)) return
+      if (emojiButtonRef.current?.contains(t)) return
+      setEmojiOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [emojiOpen])
 
   // Grow/shrink the composer to its content. Reading scrollHeight forces
   // a full-page reflow, and onChange fires per keystroke — so measure at
@@ -364,6 +383,7 @@ export default function MessageInput({
           </button>
           <button
             type="button"
+            ref={emojiButtonRef}
             onClick={() => setEmojiOpen((v) => !v)}
             disabled={attachDisabled}
             aria-label="Add emoji"
@@ -458,26 +478,17 @@ export default function MessageInput({
       )}
 
       {emojiOpen && (
-        <>
-          {/* Tap outside to close the picker. */}
-          <button
-            type="button"
-            aria-label="Close emoji picker"
-            onClick={() => setEmojiOpen(false)}
-            className="fixed inset-0 z-40 cursor-default"
-          />
-          <div className="absolute bottom-full left-0 z-50 mb-2 w-[min(350px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-line bg-card shadow-panel">
-            <Suspense
-              fallback={
-                <div className="flex h-[380px] items-center justify-center" role="status" aria-label="Loading emoji picker">
-                  <Loader2 className="h-6 w-6 animate-spin text-ink-3" />
-                </div>
-              }
-            >
-              <EmojiPickerPanel onSelect={insertEmoji} />
-            </Suspense>
-          </div>
-        </>
+        <div ref={emojiPanelRef} className="absolute bottom-full left-0 z-50 mb-2 w-[min(350px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-line bg-card shadow-panel">
+          <Suspense
+            fallback={
+              <div className="flex h-[380px] items-center justify-center" role="status" aria-label="Loading emoji picker">
+                <Loader2 className="h-6 w-6 animate-spin text-ink-3" />
+              </div>
+            }
+          >
+            <EmojiPickerPanel onSelect={insertEmoji} />
+          </Suspense>
+        </div>
       )}
     </div>
   )
