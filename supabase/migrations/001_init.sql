@@ -182,7 +182,7 @@ begin
   if auth.uid() is null then
     raise exception 'Not authenticated';
   end if;
-  delete from public.messages;
+  delete from public.messages where true;
 end;
 $$;
 
