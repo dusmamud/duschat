@@ -169,6 +169,19 @@ function MessageBubble({
               {time}
               {message.edited ? ' (edited)' : ''}
             </span>
+            {/* Read receipt — green double tick next to the time, only once
+              the other user has read this message. Nothing shows while it
+              is unread, so the row stays clean. */}
+            {isMine && !message.pending && message.read_at && (
+              <span
+                className="flex items-center"
+                role="status"
+                aria-label="Read"
+                title="Read"
+              >
+                <CheckCheck className="h-3.5 w-3.5 text-ok" aria-hidden />
+              </span>
+            )}
           </span>
         )}
 
@@ -336,26 +349,8 @@ function MessageBubble({
           ) : null}
         </div>
 
-        {/* Read receipt — always visible on my messages, unlike the action
-          buttons (which stay hover-hidden on desktop). WhatsApp-style:
-          single grey tick = sent, double green tick = read by the other user. */}
-        <div className="mt-1 flex flex-wrap items-center gap-2 px-1">
-          {isMine && !message.pending && (
-            <span
-              className="flex items-center"
-              role="status"
-              aria-label={message.read_at ? 'Read' : 'Sent'}
-              title={message.read_at ? 'Read' : 'Sent'}
-            >
-              {message.read_at ? (
-                <CheckCheck className="h-4 w-4 text-ok" aria-hidden />
-              ) : (
-                <Check className="h-4 w-4 text-ink-3" aria-hidden />
-              )}
-            </span>
-          )}
-          {/* Actions stay visible on touch screens, and reveal on hover / keyboard focus on desktop — otherwise every message carries a row of buttons. */}
-          <div className="flex flex-wrap items-center gap-2 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-focus-within:opacity-100 [@media(hover:hover)]:group-hover:opacity-100">
+        {/* Actions stay visible on touch screens, and reveal on hover / keyboard focus on desktop — otherwise every message carries a row of buttons. */}
+        <div className="mt-1 flex flex-wrap items-center gap-2 px-1 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-focus-within:opacity-100 [@media(hover:hover)]:group-hover:opacity-100">
           <button
             type="button"
             onClick={() => void handleCopy()}
@@ -429,7 +424,6 @@ function MessageBubble({
               </button>
             )
           )}
-          </div>
         </div>
       </div>
     </div>
