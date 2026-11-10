@@ -16,7 +16,7 @@ const PAGE_SIZE = 50
 // Explicit column list — never select('*'): keeps payloads small and the
 // query stable against future columns.
 const MESSAGE_COLUMNS =
-  'id, sender_id, type, content, file_url, file_name, file_size, reply_to, created_at, updated_at, edited'
+  'id, sender_id, type, content, file_url, file_name, file_size, reply_to, created_at, updated_at, edited, read_at'
 
 interface PageCursor {
   createdAt: string
@@ -100,6 +100,8 @@ export function useMessages(): UseMessagesResult {
   // burst of triggers refetches at most once per 10s.
   const refetchingRef = useRef(false)
   const lastRefetchAtRef = useRef(0)
+  // Mark-as-read — guards so concurrent triggers never stack RPC calls.
+  const markReadRef = useRef(false)
   // True once the channel has subscribed at least once — a later SUBSCRIBED
   // is a rejoin, and only a rejoin needs a catch-up refetch (the first
   // subscribe is covered by the initial load).
@@ -351,6 +353,38 @@ export function useMessages(): UseMessagesResult {
   // keys, so a user with two tabs (two metas under one key) is handled.
   const myId = sessionUserId ?? user?.id ?? null
   const myName = user?.name ?? user?.username ?? 'Someone'
+
+  // Mark the other user's messages as read — the read receipt. Best
+  // practice (iMessage / WhatsApp): opening the conversation marks its
+  // messages as read. The RPC is idempotent (it only touches rows where
+  // read_at IS NULL) and is guarded here so it never fires when there is
+  // nothing unread or the tab is hidden. The sender sees the tick flip
+  // live via the realtime UPDATE event on the row.
+  const markRead = useCallback(async () => {
+    if (markReadRef.current) return
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+    const hasUnread = messagesRef.current.some(
+      (m) => m.sender_id !== myId && !m.read_at && !m.pending,
+    )
+    if (!hasUnread) return
+    markReadRef.current = true
+    try {
+      await supabase.rpc('mark_messages_read')
+    } catch {
+      // A failed mark-as-read is not fatal — the next trigger retries.
+      // Do not surface an error banner.
+    } finally {
+      markReadRef.current = false
+    }
+  }, [myId])
+
+  // Mark as read whenever the loaded messages change (initial load, new
+  // arrivals, refetch) and the chat is visible.
+  useEffect(() => {
+    if (loading) return
+    void markRead()
+  }, [messages, loading, markRead])
+
   useEffect(() => {
     if (!myId) return
     const channel = supabase
@@ -494,7 +528,13 @@ export function useMessages(): UseMessagesResult {
       void refetchLatest()
     }
     const onVisible = () => {
-      if (document.visibilityState === 'visible') catchUp()
+      if (document.visibilityState === 'visible') {
+        catchUp()
+        // Back from a hidden tab: messages that arrived while away were
+        // already loaded — mark them read now (the messages-change effect
+        // above only fires when the list itself changes).
+        void markRead()
+      }
     }
     // Only refetch on focus after a real absence (30s+) — not on every
     // click back into the window, which would waste REST calls.
@@ -520,7 +560,7 @@ export function useMessages(): UseMessagesResult {
       window.removeEventListener('focus', onFocus)
       window.clearInterval(timer)
     }
-  }, [refetchLatest])
+  }, [refetchLatest, markRead])
 
   // Auto-scroll to bottom on new messages ONLY when the user is already
   // near the bottom (or the message is their own). Otherwise show the
@@ -622,6 +662,7 @@ export function useMessages(): UseMessagesResult {
         created_at: now,
         updated_at: now,
         edited: false,
+        read_at: null,
         sender: userRef.current ?? undefined,
         reply,
         pending: true,
@@ -717,6 +758,7 @@ export function useMessages(): UseMessagesResult {
       created_at: now,
       updated_at: now,
       edited: false,
+      read_at: null,
       sender: userRef.current ?? undefined,
       reply,
       pending: true,

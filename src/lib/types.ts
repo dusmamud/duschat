@@ -20,6 +20,9 @@ export interface Message {
   created_at: string
   updated_at: string
   edited: boolean
+  /** When the other user read this message (null = not yet read). Drives
+   *  the green read tick on my messages. */
+  read_at: string | null
   sender?: Profile
   reply?: Message | null
   pending?: boolean

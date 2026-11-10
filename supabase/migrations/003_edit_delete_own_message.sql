@@ -10,7 +10,15 @@ alter table public.messages
   add constraint messages_file_name_max_length check (file_name is null or char_length(file_name) <= 255),
   add constraint messages_file_url_no_http check (file_url is null or file_url not like 'http%');
 create or replace function public.set_message_updated_at() returns trigger language plpgsql as $$
-begin new.updated_at := now(); new.edited := true; return new; end; $$;
+begin
+  -- Only a content change is an edit. A read (read_at only, set by
+  -- mark_messages_read) must not flip edited=true or bump updated_at.
+  -- (Redefined in 005_read_receipts.sql; kept in sync here.)
+  if new.content is distinct from old.content then
+    new.updated_at := now(); new.edited := true;
+  end if;
+  return new;
+end; $$;
 drop trigger if exists messages_set_updated_at on public.messages;
 create trigger messages_set_updated_at before update on public.messages for each row execute function public.set_message_updated_at();
 create or replace function public.guard_message_edit() returns trigger language plpgsql as $$
