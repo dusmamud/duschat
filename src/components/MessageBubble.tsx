@@ -169,19 +169,6 @@ function MessageBubble({
               {time}
               {message.edited ? ' (edited)' : ''}
             </span>
-            {/* Read receipt — green double tick next to the time, only once
-              the other user has read this message. Nothing shows while it
-              is unread, so the row stays clean. */}
-            {isMine && !message.pending && message.read_at && (
-              <span
-                className="flex items-center"
-                role="status"
-                aria-label="Read"
-                title="Read"
-              >
-                <CheckCheck className="h-3.5 w-3.5 text-ok" aria-hidden />
-              </span>
-            )}
           </span>
         )}
 
@@ -339,6 +326,18 @@ function MessageBubble({
           ) : (
             <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words text-pretty">
               {highlight(message.content, searchQuery)}
+              {/* Read receipt inside the bubble — green double tick at the
+                end of the text, only once the other user has read it. */}
+              {isMine && !message.pending && message.read_at && (
+                <span
+                  className="ml-1.5 inline-flex align-middle"
+                  role="status"
+                  aria-label="Read"
+                  title="Read"
+                >
+                  <CheckCheck className="h-3.5 w-3.5 text-ok" aria-hidden />
+                </span>
+              )}
             </p>
           )}
           {/* Caption typed with a file/image — shows under the media. */}
@@ -347,6 +346,19 @@ function MessageBubble({
               {highlight(message.content, searchQuery)}
             </p>
           ) : null}
+          {/* Read receipt inside the bubble — for image/file/code messages,
+            right-aligned below the content. Text messages show it inline at
+            the end of the text instead. */}
+          {isMine && !message.pending && message.read_at && message.type !== 'text' && (
+            <span
+              className="mt-1 flex justify-end"
+              role="status"
+              aria-label="Read"
+              title="Read"
+            >
+              <CheckCheck className="h-3.5 w-3.5 text-ok" aria-hidden />
+            </span>
+          )}
         </div>
 
         {/* Actions stay visible on touch screens, and reveal on hover / keyboard focus on desktop — otherwise every message carries a row of buttons. */}
