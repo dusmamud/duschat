@@ -66,6 +66,16 @@ export default function MessageInput({
     }
   }, [stagedPreview])
 
+  // When the user taps Reply on a message, the composer is for the reply —
+  // focus the box at once so they can type straight away (standard chat
+  // behaviour). Only when a reply is STARTED (replyTarget goes from null
+  // to a message); cancelling a reply does not steal focus.
+  useEffect(() => {
+    if (replyTarget) {
+      textareaRef.current?.focus()
+    }
+  }, [replyTarget])
+
   // Grow/shrink the composer to its content. Reading scrollHeight forces
   // a full-page reflow, and onChange fires per keystroke — so measure at
   // most once per animation frame, and only write when the height
