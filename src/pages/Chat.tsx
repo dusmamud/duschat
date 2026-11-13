@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowDown, Loader2, Search, WifiOff, X } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { deleteAllChats } from '@/lib/supabase'
@@ -6,7 +6,7 @@ import { formatDayKey, formatDayLabel, formatSearchDate } from '@/lib/format'
 import { uploadFile, uploadImage, uploadTxt, isImageFile, isTxtFile } from '@/lib/files'
 import { useMessages } from '@/hooks/useMessages'
 import ChatHeader from '@/components/ChatHeader'
-import MessageBubble from '@/components/MessageBubble'
+import MessageBubble, { linkifyAndHighlight } from '@/components/MessageBubble'
 import MessageInput from '@/components/MessageInput'
 import Toast from '@/components/Toast'
 import type { Message } from '@/lib/types'
@@ -59,16 +59,6 @@ function matchesQuery(m: Message, q: string): boolean {
   return (
     m.content.toLowerCase().includes(query) ||
     (m.file_name ?? '').toLowerCase().includes(query)
-  )
-}
-
-/** Render `text` with every case-insensitive occurrence of `query` in <mark>. */
-function highlightSearchText(text: string, query: string): ReactNode {
-  const q = query.trim()
-  if (!q) return text
-  const parts = text.split(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'ig'))
-  return parts.map((part, i) =>
-    part.toLowerCase() === q.toLowerCase() ? <mark key={i}>{part}</mark> : part,
   )
 }
 
@@ -427,8 +417,8 @@ export default function Chat() {
                     </span>
                     <span className="block truncate text-sm text-ink">
                       {m.content
-                        ? highlightSearchText(m.content, query)
-                        : highlightSearchText(m.file_name ?? 'Attachment', query)}
+                        ? linkifyAndHighlight(m.content, query, false)
+                        : linkifyAndHighlight(m.file_name ?? 'Attachment', query, false)}
                     </span>
                   </button>
                 ))}

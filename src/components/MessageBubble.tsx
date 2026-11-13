@@ -52,8 +52,14 @@ const LINK_CLASS = 'text-amber underline underline-offset-2 decoration-amber/40 
  * URL. So detect the links FIRST with linkify's own `find()`, render each
  * link whole (no mark inside a link — staying clickable matters more than
  * the highlight), and only highlight the plain-text segments between links.
+ *
+ * `interactive` renders real <a> links (message bubbles). Pass false for
+ * contexts where the text sits inside a button (the search results
+ * preview) — there a link is styled amber like a link but is a <span>,
+ * because an <a> inside a <button> is invalid and would fight the
+ * button's own click (jump to the message).
  */
-function linkifyAndHighlight(text: string, query: string): ReactNode {
+export function linkifyAndHighlight(text: string, query: string, interactive = true): ReactNode {
   const links = find(text)
   if (links.length === 0) return highlight(text, query)
   const out: ReactNode[] = []
@@ -65,15 +71,21 @@ function linkifyAndHighlight(text: string, query: string): ReactNode {
       out.push(<Fragment key={`t${pos}`}>{highlight(text.slice(pos, link.start), query)}</Fragment>)
     }
     out.push(
-      <a
-        key={`l${link.start}`}
-        href={link.href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={LINK_CLASS}
-      >
-        {link.value}
-      </a>,
+      interactive ? (
+        <a
+          key={`l${link.start}`}
+          href={link.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={LINK_CLASS}
+        >
+          {link.value}
+        </a>
+      ) : (
+        <span key={`l${link.start}`} className={LINK_CLASS}>
+          {link.value}
+        </span>
+      ),
     )
     pos = link.end
   }
