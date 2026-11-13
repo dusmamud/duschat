@@ -216,7 +216,10 @@ export default function MessageInput({
   }
 
   const insertText = (text: string) => {
-    setValue((prev) => prev + text)
+    // Clamp to the limit — setValue bypasses the textarea's maxLength, and
+    // without this a paste near the limit would exceed 20,000 chars and
+    // the send would fail on the DB check constraint.
+    setValue((prev) => (prev + text).slice(0, MAX_MESSAGE_LENGTH))
     textareaRef.current?.focus()
     requestAnimationFrame(resize)
   }
@@ -228,12 +231,13 @@ export default function MessageInput({
   const insertEmoji = (emoji: string) => {
     const el = textareaRef.current
     if (!el) {
-      setValue((prev) => prev + emoji)
+      setValue((prev) => (prev + emoji).slice(0, MAX_MESSAGE_LENGTH))
       return
     }
     const start = el.selectionStart ?? value.length
     const end = el.selectionEnd ?? value.length
-    const next = value.slice(0, start) + emoji + value.slice(end)
+    // Clamp to the limit (see insertText) — setValue bypasses maxLength.
+    const next = (value.slice(0, start) + emoji + value.slice(end)).slice(0, MAX_MESSAGE_LENGTH)
     setValue(next)
     onTyping(next.length > 0)
     requestAnimationFrame(() => {
@@ -481,7 +485,7 @@ export default function MessageInput({
         <div ref={emojiPanelRef} className="absolute bottom-full left-0 z-50 mb-2 w-[min(350px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-line bg-card shadow-panel">
           <Suspense
             fallback={
-              <div className="flex h-[380px] items-center justify-center" role="status" aria-label="Loading emoji picker">
+              <div className="flex h-[clamp(200px,calc(100dvh-200px),380px)] items-center justify-center" role="status" aria-label="Loading emoji picker">
                 <Loader2 className="h-6 w-6 animate-spin text-ink-3" />
               </div>
             }

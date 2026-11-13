@@ -109,6 +109,10 @@ export function useMessages(): UseMessagesResult {
   const lastRefetchAtRef = useRef(0)
   // Mark-as-read — guards so concurrent triggers never stack RPC calls.
   const markReadRef = useRef(false)
+  // Mirrors markRead for the scroll handler: the scroll effect is defined
+  // before markRead, so it cannot take markRead as a dep (TDZ). Same
+  // pattern as channelConnectedRef.
+  const markReadFnRef = useRef<() => Promise<void>>(async () => {})
   // True once the channel has subscribed at least once — a later SUBSCRIBED
   // is a rejoin, and only a rejoin needs a catch-up refetch (the first
   // subscribe is covered by the initial load).
@@ -138,6 +142,12 @@ export function useMessages(): UseMessagesResult {
 
   const jumpToBottom = useCallback(() => {
     setShowNewMessages(false)
+    // The user is intentionally going to the bottom — clear the
+    // scrolled-up state at once, so the circular jump button does not
+    // flash while the smooth scroll is still travelling. The scroll
+    // handler confirms it when the scroll completes.
+    isScrolledUpRef.current = false
+    setIsScrolledUp(false)
     scrollToBottom('smooth')
   }, [scrollToBottom])
 
@@ -193,6 +203,7 @@ export function useMessages(): UseMessagesResult {
     if (!el) return
     const onScroll = () => {
       const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= 120
+      const wasNearBottom = nearBottomRef.current
       nearBottomRef.current = nearBottom
       // Only re-render when the scrolled-up state actually flips — the
       // scroll event fires constantly while the user is scrolling.
@@ -200,6 +211,12 @@ export function useMessages(): UseMessagesResult {
       if (isScrolledUpRef.current !== scrolledUp) {
         isScrolledUpRef.current = scrolledUp
         setIsScrolledUp(scrolledUp)
+      }
+      // Scrolled back to the bottom: the latest messages are visible
+      // now, so they can be marked read. (Messages that arrived while
+      // scrolled up were deliberately NOT marked read until now.)
+      if (nearBottom && !wasNearBottom) {
+        void markReadFnRef.current()
       }
     }
     el.addEventListener('scroll', onScroll, { passive: true })
@@ -314,18 +331,29 @@ export function useMessages(): UseMessagesResult {
         `${m.sender_id}|${m.type}|${m.type === 'image' || m.type === 'file' ? m.file_name : m.content}`
       setMessages((prev) => {
         const fetchedById = new Map(hydrated.map((m) => [m.id, m]))
-        const pendingByKey = new Map<string, Message>()
+        // Pending messages grouped by key, in send order — a queue per
+        // key. Two identical pending messages share a key, so a single
+        // Map entry would collapse them and give both server rows the
+        // same clientId (duplicate React keys). A queue gives each
+        // server row its own pending message.
+        const pendingByKey = new Map<string, Message[]>()
         for (const m of prev) {
-          if (m.pending) pendingByKey.set(keyOf(m), m)
+          if (m.pending) {
+            const queue = pendingByKey.get(keyOf(m))
+            if (queue) queue.push(m)
+            else pendingByKey.set(keyOf(m), [m])
+          }
         }
+        // Ids of pending messages already consumed by a server row.
         const usedPending = new Set<string>()
         const result: Message[] = []
         for (const h of hydrated) {
-          const pending = pendingByKey.get(keyOf(h))
+          const queue = pendingByKey.get(keyOf(h))
+          const pending = queue && queue.length > 0 ? queue.shift() : undefined
           const local = prev.find((m) => m.id === h.id)
           if (pending) {
             result.push({ ...h, clientId: pending.clientId })
-            usedPending.add(keyOf(h))
+            usedPending.add(pending.id)
           } else if (local) {
             result.push({ ...h, clientId: local.clientId })
           } else {
@@ -335,7 +363,8 @@ export function useMessages(): UseMessagesResult {
         for (const m of prev) {
           if (fetchedById.has(m.id)) continue
           if (m.pending) {
-            if (!usedPending.has(keyOf(m))) result.push(m)
+            if (usedPending.has(m.id)) continue
+            result.push(m)
             continue
           }
           if (m.created_at < oldestFetchedAt) result.push(m)
@@ -393,10 +422,19 @@ export function useMessages(): UseMessagesResult {
     }
   }, [myId])
 
+  // Keep the scroll handler's mirror current (same render-time assignment
+  // pattern as userRef / messagesRef above).
+  markReadFnRef.current = markRead
+
   // Mark as read whenever the loaded messages change (initial load, new
-  // arrivals, refetch) and the chat is visible.
+  // arrivals, refetch) and the chat is visible — but only when the user
+  // can actually see the latest messages (near the bottom). A message
+  // that arrives while the user is scrolled up reading history stays
+  // unread until they scroll back down (the scroll handler marks it
+  // read then).
   useEffect(() => {
     if (loading) return
+    if (!nearBottomRef.current) return
     void markRead()
   }, [messages, loading, markRead])
 
@@ -547,8 +585,13 @@ export function useMessages(): UseMessagesResult {
         catchUp()
         // Back from a hidden tab: messages that arrived while away were
         // already loaded — mark them read now (the messages-change effect
-        // above only fires when the list itself changes).
-        void markRead()
+        // above only fires when the list itself changes). Only when the
+        // user can see the latest messages — a returning user normally
+        // lands at the bottom, but if they return while scrolled up,
+        // the messages stay unread until they scroll down.
+        if (nearBottomRef.current) {
+          void markRead()
+        }
       }
     }
     // Only refetch on focus after a real absence (30s+) — not on every

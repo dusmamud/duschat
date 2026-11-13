@@ -1,6 +1,6 @@
-import { lazy, memo, Suspense, useEffect, useState, type ReactNode } from 'react'
+import { Fragment, lazy, memo, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { Check, CheckCheck, Copy, Download, File, FileText, Pencil, Reply, Trash2, X } from 'lucide-react'
-import Linkify from 'linkify-react'
+import { find } from 'linkifyjs'
 import { getSignedFileUrl } from '@/lib/supabase'
 import { formatHHmm } from '@/lib/format'
 import { formatFileSize, isTxtFile, prefetchTxtContent } from '@/lib/files'
@@ -39,6 +39,48 @@ function highlight(text: string, query: string): ReactNode {
   return parts.map((part, i) =>
     part.toLowerCase() === q.toLowerCase() ? <mark key={i}>{part}</mark> : part,
   )
+}
+
+/** Amber underline styling for links — same as the old Linkify options. */
+const LINK_CLASS = 'text-amber underline underline-offset-2 decoration-amber/40 hover:decoration-amber'
+
+/**
+ * Render `text` with URLs (and emails) as links and the search `query` in
+ * <mark> — but never both at once. The old <Linkify>{highlight(...)}</Linkify>
+ * broke when the search term fell inside a URL: highlight() splits the URL
+ * into separate string children and Linkify then never recognises it as one
+ * URL. So detect the links FIRST with linkify's own `find()`, render each
+ * link whole (no mark inside a link — staying clickable matters more than
+ * the highlight), and only highlight the plain-text segments between links.
+ */
+function linkifyAndHighlight(text: string, query: string): ReactNode {
+  const links = find(text)
+  if (links.length === 0) return highlight(text, query)
+  const out: ReactNode[] = []
+  let pos = 0
+  for (const link of links) {
+    if (link.start > pos) {
+      // Each segment's <mark> keys live inside its own Fragment, so marks
+      // from different segments never collide.
+      out.push(<Fragment key={`t${pos}`}>{highlight(text.slice(pos, link.start), query)}</Fragment>)
+    }
+    out.push(
+      <a
+        key={`l${link.start}`}
+        href={link.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={LINK_CLASS}
+      >
+        {link.value}
+      </a>,
+    )
+    pos = link.end
+  }
+  if (pos < text.length) {
+    out.push(<Fragment key={`t${pos}`}>{highlight(text.slice(pos), query)}</Fragment>)
+  }
+  return out
 }
 
 function copyText(message: Message): string {
@@ -326,15 +368,7 @@ function MessageBubble({
             )
           ) : (
             <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words text-pretty">
-              <Linkify
-                options={{
-                  target: '_blank',
-                  rel: 'noopener noreferrer',
-                  className: 'text-amber underline underline-offset-2 decoration-amber/40 hover:decoration-amber',
-                }}
-              >
-                {highlight(message.content, searchQuery)}
-              </Linkify>
+              {linkifyAndHighlight(message.content, searchQuery)}
               {/* Read receipt inside the bubble — green double tick at the
                 end of the text, only once the other user has read it. */}
               {isMine && !message.pending && message.read_at && (
@@ -352,15 +386,7 @@ function MessageBubble({
           {/* Caption typed with a file/image — shows under the media. */}
           {(message.type === 'image' || message.type === 'file') && message.content ? (
             <p className="mt-2 px-1 text-[15px] leading-relaxed whitespace-pre-wrap break-words text-pretty">
-              <Linkify
-                options={{
-                  target: '_blank',
-                  rel: 'noopener noreferrer',
-                  className: 'text-amber underline underline-offset-2 decoration-amber/40 hover:decoration-amber',
-                }}
-              >
-                {highlight(message.content, searchQuery)}
-              </Linkify>
+              {linkifyAndHighlight(message.content, searchQuery)}
             </p>
           ) : null}
           {/* Read receipt inside the bubble — for image/file/code messages,
